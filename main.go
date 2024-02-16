@@ -22,6 +22,7 @@ type Repository struct {
 	DBConn *xorm.Engine
 }
 
+
 func  (repo *Repository) CreateEvent (ctx *fiber.Ctx) error{
 	organizer_id := ctx.Params("organizer_id")
 	var event models.Event
@@ -79,6 +80,7 @@ func  (repo *Repository) CreateEvent (ctx *fiber.Ctx) error{
 	ctx.Status(http.StatusCreated).JSON(&fiber.Map{"data":event, "message":"user created"})
 	return err
 }
+
 
 func (repo *Repository) CreateUser(ctx *fiber.Ctx) error {
 	user := &models.RegularUser{}
@@ -217,6 +219,7 @@ func ParseUserID(userID string) int {
 	return parsedID
 }
 
+
 func (repo *Repository) BookEvent(ctx *fiber.Ctx) error {
 	event_id := ctx.Params("event_id")
 	user_id := ctx.Params("user_id")
@@ -302,6 +305,146 @@ func (repo *Repository) BookEvent(ctx *fiber.Ctx) error {
 }
 
 
+func (repo *Repository) AllEvents(ctx *fiber.Ctx) error {
+	events := []models.Event{}
+
+	// Begin transaction
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err := session.Begin()
+	if err != nil{
+		log.Fatal("Transaction failed")
+	}
+	err = repo.DBConn.Find(&events)
+	if err != nil{
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid event request"})
+		session.Rollback()
+		return err
+	}
+
+	// Commit transaction
+	err = session.Commit()
+	if err != nil{
+		log.Fatal("Transaction failed")
+		return err
+	}
+	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
+		"data":events,
+	})
+	return err
+}
+
+
+func (repo *Repository) GetUser(ctx *fiber.Ctx) error {
+	user_id := ctx.Params("user_id")
+	userData := models.RegularUser{}
+
+	// Begin transaction
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err := session.Begin()
+	if err != nil{
+		log.Fatal("Transaction failed")
+	}
+	_, err = repo.DBConn.ID(user_id).Get(&userData)
+	if err != nil{
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid user request"})
+		session.Rollback()
+		return err
+	}
+
+	if userData.ID != ParseUserID(user_id){
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid user ID"})
+		session.Rollback()
+		return err
+	}
+
+	// Commit transaction
+	err = session.Commit()
+	if err != nil{
+		log.Fatal("Transaction failed")
+		return err
+	}
+	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
+		"data":userData,
+	})
+	return err
+}
+
+
+func (repo *Repository) GetOrganizer(ctx *fiber.Ctx) error {
+	organizer_id := ctx.Params("organizer_id")
+	organizerData := models.Organizer{}
+
+	// Begin transaction
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err := session.Begin()
+	if err != nil{
+		log.Fatal("Transaction failed")
+	}
+	_, err = repo.DBConn.ID(organizer_id).Get(&organizerData)
+	if err != nil{
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid organizer request"})
+		session.Rollback()
+		return err
+	}
+
+	if organizerData.ID != ParseUserID(organizer_id){
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid organizer ID"})
+		session.Rollback()
+		return err
+	}
+
+	// Commit transaction
+	err = session.Commit()
+	if err != nil{
+		log.Fatal("Transaction failed")
+		return err
+	}
+	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
+		"data":organizerData,
+	})
+	return err
+}
+
+
+func (repo *Repository) GetEvent(ctx *fiber.Ctx) error {
+	event_id := ctx.Params("event_id")
+	eventData := models.Event{}
+
+	// Begin transaction
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err := session.Begin()
+	if err != nil{
+		log.Fatal("Transaction failed")
+	}
+	_, err = repo.DBConn.ID(event_id).Get(&eventData)
+	if err != nil{
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid event request"})
+		session.Rollback()
+		return err
+	}
+
+	if eventData.ID != ParseUserID(event_id){
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid event ID"})
+		session.Rollback()
+		return err
+	}
+	// Commit transaction
+	err = session.Commit()
+	if err != nil{
+		log.Fatal("Transaction failed")
+		return err
+	}
+	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
+		"data":eventData,
+	})
+	return err
+}
+
+
 func (repo *Repository) Routes(app *fiber.App) {
 	api := app.Group("api")
 	api.Get("/", func (*fiber.Ctx)  (error){
@@ -313,6 +456,10 @@ func (repo *Repository) Routes(app *fiber.App) {
 	api.Put("/event/booking/event::event_id/user::user_id", repo.BookEvent)
 	api.Post("/organizer/create/:id", repo.CreateOrganizer)
 	api.Post("/ticket/create/:id", repo.CreateTicket)
+	api.Get("/events", repo.AllEvents)
+	api.Get("/user/:user_id", repo.GetUser)
+	api.Get("/event/:event_id", repo.GetEvent)
+	api.Get("/organizer/:organizer_id", repo.GetOrganizer)
 }
 
 

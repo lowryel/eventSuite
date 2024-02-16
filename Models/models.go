@@ -69,8 +69,8 @@ type  Ticket struct {
 	ID        			int     		`xorm:"'id' pk autoincr"`
 	Event_id 			int       		`json:"event_id"`
 	Type     			TicketType    	`json:"type"`
-	Price    			*float64   		`json:"price"`
-	QuantityAvailable 	*string    		`json:"quantity_available"`
+	Price    			float64   		`json:"price"`
+	QuantityAvailable 	int    		`json:"quantity_available"`
 	StartSaleDate 		*string 		`json:"sale_start"`
 	EndSaleDate 		*string 		`json:"sale_end"`
 }
@@ -92,9 +92,9 @@ type Registration struct {
 	ID        			int     		`xorm:"'id' pk autoincr"`
 	User_id 			int       		`json:"user_id"`
 	Ticket_id 			int       		`json:"ticket_id"`
-	Quantity 			*int       		`json:"quantity"` 	// Number of Tickets registered
+	Quantity 			int       		`json:"quantity"` 	// Number of Tickets registered
 	RegistrationDate 	time.Time 		`json:"registration_date"`
-	Status 				*StatusChoice   `json:"status"`
+	Status 				StatusChoice   `json:"status"`
 	CreatedAt 			time.Time 		`json:"created_at"`
 	UpdatedAt 			time.Time 		`json:"updated_at"`
 }
@@ -102,6 +102,8 @@ type Registration struct {
 var engine *xorm.Engine
 
 func DBConnection() (*xorm.Engine, error) {
+	// ty := Ticket{}
+	// ty.Type = GeneralAdmission
 	dsn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s  dbname=%s sslmode=disable", "localhost", 5432, "eugene", "cartelo009", "eventsdb")
 	engine, err := xorm.NewEngine("postgres", dsn)
