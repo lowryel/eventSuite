@@ -14,7 +14,7 @@ import (
 
 //  Models
 type  Event struct {
-	ID        		int     	`xorm:"'id' pk autoincr"`
+	ID        		int     	`xorm:"'id' unique pk autoincr"`
 	Title     		*string    	`json:"title"`
 	Description 	*string    	`json:"description"`
 	StartDate 		*string 	`json:"start_date"`
@@ -39,8 +39,9 @@ type  RegularUser struct {				//User Object
 }
 
 type  EventUser struct {			// Junction table for querying many-to-many relationships
-	EventID	int		`xorm:"'event_id' pk autoincr"`
-	UserID	int		`xorm:"'user_id' pk autoincr"`
+    ID     	int 	`xorm:"'id' pk autoincr"`
+	EventID	int		`xorm:"'event_id' pk"`
+	UserID	int		`xorm:"'user_id' pk"`
 }
 
 type  Organizer struct {			// Events Manager
@@ -49,7 +50,7 @@ type  Organizer struct {			// Events Manager
 	Description 	*string    		`json:"description"`
 	ContactEmail 	*string    		`xorm:"unique" json:"email"`
 	ContactPhone 	*string    		`xorm:"unique" json:"phone"`
-	EventsManaged  	[]*Event    	`json:"events_managed"`      //xorm:"unique" 
+	EventsManaged  	[]*Event    	`xorm:"unique" json:"events_managed"`      //xorm:"unique" 
 	CreatedAt 		time.Time 		`json:"created_at"`
 	UpdatedAt 		time.Time 		`json:"updated_at"`
 }
