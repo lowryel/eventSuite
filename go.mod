@@ -4,7 +4,11 @@ go 1.22.0
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
+	github.com/patrickmn/go-cache v2.1.0+incompatible
+	golang.org/x/crypto v0.14.0
 	xorm.io/xorm v1.3.8
 )
 

@@ -1,3 +1,14 @@
+## Event Management System
+------------------------------------------
+###### Full text search
+- This query indicate that, use whatever the queryParam carries to search through the records and retrieve all the variables b/n SELECT and FROM
+```go
+    err := repo.DBConn.SQL("SELECT id, title, description, location, start_date, end_date, organizer_id FROM event WHERE to_tsvector(coalesce(start_date, '') || title || ' ' || coalesce(description, '')) @@ websearch_to_tsquery(?)", queryParam).Find(&events)
+```
+
+
+
+
 ##### Event:
 
                    - id: Unique identifier for the event (integer or UUID)

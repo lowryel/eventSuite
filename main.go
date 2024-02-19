@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
+
+	// "os"
+	"github.com/joho/godotenv"
 	// "errors"
 
 	// "github.com/google/uuid"
@@ -22,6 +26,10 @@ var (
 type Repository struct {
 	DBConn *xorm.Engine
 }
+
+var (
+	secret_key = os.Getenv("SECRET_KEY")
+)
 
 func (repo *Repository) CreateEvent(ctx *fiber.Ctx) error {
 	organizer_id := ctx.Params("organizer_id")
@@ -115,11 +123,32 @@ func (repo *Repository) CreateUser(ctx *fiber.Ctx) error {
 		log.Fatal("session error", err)
 		return nil
 	}
+	// hash password
+	hashed_pass, err := middleware.HashPassword(*user.Password)
+	if err != nil {
+		log.Fatal("couldn't hash password")
+		return err
+	}
+	user.Password = &hashed_pass
 	// save user record
 	_, err = repo.DBConn.Insert(user)
 	if err != nil {
 		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{
 			"error": fmt.Sprintf("error inserting user %s", err),
+		})
+		session.Rollback()
+		return err
+	}
+	loginData := models.LoginData{
+		Email: *user.Email,
+		Username: *user.Username,
+		Password: *user.Password,
+	}
+	// inser data into login data table
+	_, err = repo.DBConn.Insert(loginData)
+	if err != nil{
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{
+			"error": fmt.Sprintf("error inserting login data: %s", err),
 		})
 		session.Rollback()
 		return err
@@ -134,6 +163,45 @@ func (repo *Repository) CreateUser(ctx *fiber.Ctx) error {
 	ctx.Status(http.StatusCreated).JSON(&fiber.Map{"data": user, "message": "user created"})
 	return err
 }
+
+func (repo *Repository) LoginHandler(c *fiber.Ctx) error {
+	loginObj := &models.Login{}
+	err := c.BodyParser(loginObj)
+	if err != nil{
+		log.Fatal("invalid data")
+		return nil
+	}
+
+	// retrieve logged in user object with username
+	user := &models.LoginData{}
+	_, err = repo.DBConn.SQL("select * from login_data where email = ?", loginObj.Email).Get(user)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	// match the saved hash in login table to the login input password
+	if err = middleware.HashesMatch(user.Password, loginObj.Password); err != nil{
+		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message":"incorrect username or password"})
+		return nil
+	}
+	// signed_user := StoreUsers{}
+	token, err := middleware.GenerateToken(user.Username, user.Email)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(&fiber.Map{"msg":"error in generating token"})
+	}
+
+	// rows, err := middleware.InserToken(r.DBConn, "shops.store_users", token, user.Username)
+	// if err != nil{
+	// 	return nil
+	// }
+	log.Println("Login successful")
+	c.Status(http.StatusCreated).JSON(&fiber.Map{"token": token})
+	return err
+}
+
+
+
+
 
 // Create Organizer (person responsible for creating events)
 func (repo *Repository) CreateOrganizer(ctx *fiber.Ctx) error {
@@ -291,7 +359,6 @@ func (repo *Repository) BookEvent(ctx *fiber.Ctx) error {
 		session.Rollback()
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "no event referenced"})
 	}
-
 
 	eventData := EventData{
 		Data: &event,
@@ -461,25 +528,54 @@ func (repo *Repository) GetEvent(ctx *fiber.Ctx) error {
 	return err
 }
 
+
+func (repo *Repository) SearchEvent(ctx *fiber.Ctx) error {
+	queryParam := ctx.Params("query")
+	events := []*models.Event{}
+
+	// err := repo.DBConn.Where("start_date = ?", queryParam).Find(&events)
+	err := repo.DBConn.SQL("SELECT id, title, description, location, start_date, end_date, organizer_id FROM event WHERE to_tsvector(coalesce(start_date, '') || title || ' ' || coalesce(description, '')) @@ websearch_to_tsquery(?)", queryParam).Find(&events)
+	if err != nil{
+		log.Fatal("query error", err)
+		return err
+	}
+	log.Println(events)
+	ctx.Status(http.StatusOK).JSON(&fiber.Map{
+		"data": events,
+	})
+	return err
+}
+
+
 func (repo *Repository) Routes(app *fiber.App) {
 	api := app.Group("api")
 	api.Get("/", func(c *fiber.Ctx) error {
 		fmt.Println("Hello HTTP SERVER")
 		return nil
 	})
+
 	api.Post("/event/create/:organizer_id", repo.CreateEvent)
 	api.Post("/user/create", repo.CreateUser)
 	api.Put("/event/booking/event::event_id/user::user_id", repo.BookEvent)
 	api.Post("/organizer/create", repo.CreateOrganizer)
 	api.Post("/ticket/create/:id", repo.CreateTicket)
 	api.Get("/events", repo.AllEvents)
+	api.Post("/login", repo.LoginHandler)
+
+	app.Use(middleware.JWTMiddleware())
 	api.Get("/user/:user_id", repo.GetUser)
 	api.Get("/event/:event_id", repo.GetEvent)
+	api.Get("/search/:query", repo.SearchEvent)
 	api.Get("/organizer/:organizer_id", repo.GetOrganizer)
 }
 
 func main() {
 	fmt.Println("Hello World, An Event Manager Cooking")
+	err := godotenv.Load()
+	if err != nil{
+		log.Fatal("Error loading .env file")
+	}
+	
 	app := fiber.New(
 		fiber.Config{
 			ServerHeader: "Fiber",

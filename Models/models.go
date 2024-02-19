@@ -26,6 +26,18 @@ type  Event struct {
 	UpdatedAt time.Time 		`json:"updated_at"`
 }
 
+
+type LoginData struct{
+	Email string
+	Username string
+	Password string
+}
+
+type Login struct{
+	Email string		`json:"email"`
+	Password string		`json:"password"`
+}
+
 type  RegularUser struct {				//User Object
 	ID        			int     	`xorm:"'id' pk autoincr"`
 	Username     		*string    	`json:"username"`
@@ -116,7 +128,8 @@ func DBConnection() (*xorm.Engine, error) {
 	}
 	if err := engine.Sync(
 			new(Event), new(RegularUser), new(Organizer), new(Ticket), 
-			new(Registration),  new(EventUser),
+			new(Registration),  new(EventUser), new(Login), new(LoginData),
+
 		); err != nil{
 		return nil, err
 	}
