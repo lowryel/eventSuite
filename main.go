@@ -184,16 +184,19 @@ func (repo *Repository) LoginHandler(c *fiber.Ctx) error {
 		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message":"incorrect username or password"})
 		return nil
 	}
-	// signed_user := StoreUsers{}
+	// Generate jwt token
 	token, err := middleware.GenerateToken(user.Username, user.Email)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(&fiber.Map{"msg":"error in generating token"})
 	}
-
-	// rows, err := middleware.InserToken(r.DBConn, "shops.store_users", token, user.Username)
-	// if err != nil{
-	// 	return nil
-	// }
+	regular_user := models.RegularUser{
+		Token: token,
+	}
+	_, err = repo.DBConn.Where("email = ?", user.Email).Update(&regular_user)
+	if err != nil{
+		log.Println("token update failed")
+		return nil
+	}
 	log.Println("Login successful")
 	c.Status(http.StatusCreated).JSON(&fiber.Map{"token": token})
 	return err
@@ -529,6 +532,197 @@ func (repo *Repository) GetEvent(ctx *fiber.Ctx) error {
 }
 
 
+func (repo *Repository) UpdateEvent(ctx *fiber.Ctx) error {
+	event_id := ctx.Params("event_id")
+	event := models.Event{}
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err := session.Begin()
+	if err != nil{
+		ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "server error"})
+		return err
+	}
+	_, err = repo.DBConn.ID(event_id).Get(&event)
+	if err!= nil{
+		log.Println("failed to retrieve event")
+		ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "server error"})
+		session.Rollback()
+		return err
+	}
+	eventData := models.Event{}
+	if err = ctx.BodyParser(&eventData); err != nil {
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request payload"})
+		return nil
+	}
+	event.Title = eventData.Title
+	event.Description = eventData.Description
+	event.Location = eventData.Location
+	event.StartDate = eventData.StartDate
+	event.EndDate = eventData.EndDate
+	event.UpdatedAt = time.Now().Local()
+	_, err = repo.DBConn.ID(event_id).Update(&event)
+	if err != nil {
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "failed to update event"})
+		session.Rollback()
+		return nil
+	}
+	err = session.Commit()
+	if err != nil{
+		log.Fatal("Transaction failed")
+		return err
+	}
+	ctx.Status(http.StatusOK).JSON(&fiber.Map{
+		"data": "event update success",
+	})
+	return err
+}
+
+
+func (repo *Repository) UpdateUserProfile(ctx *fiber.Ctx) error {
+	user_id := ctx.Params("user_id")
+	user := models.RegularUser{}
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err := session.Begin()
+	if err != nil{
+		ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "server error"})
+		return err
+	}
+	_, err = repo.DBConn.ID(user_id).Get(&user)
+	if err!= nil{
+		log.Println("failed to retrieve event")
+		ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "server error"})
+		session.Rollback()
+		return err
+	}
+	userData := models.RegularUser{}
+	if err = ctx.BodyParser(&userData); err != nil {
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request payload"})
+		return nil
+	}
+	user.Username = userData.Username
+	user.Email = userData.Email
+	user.Fullname = userData.Fullname
+	user.Organization = userData.Organization
+	user.UpdatedAt = time.Now().Local()
+	_, err = repo.DBConn.ID(user_id).Update(&user)
+	if err != nil {
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "failed to update user data"})
+		session.Rollback()
+		return nil
+	}
+	err = session.Commit()
+	if err != nil{
+		log.Fatal("Transaction failed")
+		return err
+	}
+	ctx.Status(http.StatusOK).JSON(&fiber.Map{
+		"data": "user update success",
+	})
+	return err
+}
+
+func (repo *Repository) UpdateOrganizerProfile(ctx *fiber.Ctx) error {
+	organizer_id := ctx.Params("user_id")
+	organizer := models.Organizer{}
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err := session.Begin()
+	if err != nil{
+		ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "server error"})
+		return err
+	}
+	_, err = repo.DBConn.ID(organizer_id).Get(&organizer)
+	if err!= nil{
+		log.Println("failed to retrieve event")
+		ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "server error"})
+		session.Rollback()
+		return err
+	}
+	organizerData := models.Organizer{}
+	if err = ctx.BodyParser(&organizerData); err != nil {
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request payload"})
+		return nil
+	}
+	organizer.Name = organizerData.Name
+	organizer.ContactEmail = organizerData.ContactEmail
+	organizer.ContactPhone = organizerData.ContactPhone
+	organizer.Description = organizerData.Description
+	organizer.UpdatedAt = time.Now().Local()
+	_, err = repo.DBConn.ID(organizer_id).Update(&organizer)
+	if err != nil {
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "failed to update user data"})
+		session.Rollback()
+		return nil
+	}
+	err = session.Commit()
+	if err != nil{
+		log.Fatal("Transaction failed")
+		return err
+	}
+	ctx.Status(http.StatusOK).JSON(&fiber.Map{
+		"data": "organizer update success",
+	})
+	return err
+}
+
+// ARCHIVE AND DELETE EVENT
+func (repo *Repository) DeleteEvent(ctx *fiber.Ctx) error {
+	event_id := ctx.Params("event_id")
+	event := models.Event{}
+	if event_id == ""{
+		log.Println("no event selected for deletion")
+		return nil
+	}
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	if err := session.Begin(); err != nil{
+		ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "server error"})
+		return err
+	}
+
+	_, err := repo.DBConn.ID(event_id).Get(&event)
+	if err != nil{
+		ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"error fetching data"})
+		session.Rollback()
+		return nil
+	}
+	/* ARCHIVE EVENT BEFORE DELETING FROM EVENT TABLE */
+	archive := models.ArchiveEvent {
+		Data: &event,
+	}
+	// archive event (not delete entirely)
+	_, err = repo.DBConn.Insert(&archive)
+	if err != nil{
+		ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"error archiving event"})
+		session.Rollback()
+		return err
+	}
+
+	// Delete event from event table
+	_, err = repo.DBConn.ID(event_id).Delete(&event)
+	if err != nil{
+		ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"error archiving event"})
+		session.Rollback()
+		return err
+	}
+	// commit transaction
+	err = session.Commit()
+	if err != nil{
+		log.Fatal("Transaction failed")
+		return err
+	}
+
+	ctx.Status(http.StatusOK).JSON(&fiber.Map{"msg":"deletion and archival success", "data":archive})
+	return err
+}
+
+// ARCHIVE EVENT
+
+// if user.Role == "organizer"; user is inserted into the organizer table and also the user table for login purposes
+// if user.Role == "user"
+
+
 func (repo *Repository) SearchEvent(ctx *fiber.Ctx) error {
 	queryParam := ctx.Params("query")
 	events := []*models.Event{}
@@ -554,18 +748,22 @@ func (repo *Repository) Routes(app *fiber.App) {
 		return nil
 	})
 
-	api.Post("/event/create/:organizer_id", repo.CreateEvent)
 	api.Post("/user/create", repo.CreateUser)
-	api.Put("/event/booking/event::event_id/user::user_id", repo.BookEvent)
 	api.Post("/organizer/create", repo.CreateOrganizer)
 	api.Post("/ticket/create/:id", repo.CreateTicket)
 	api.Get("/events", repo.AllEvents)
 	api.Post("/login", repo.LoginHandler)
 
 	app.Use(middleware.JWTMiddleware())
+	api.Post("/event/create/:organizer_id", repo.CreateEvent)
+	api.Put("/event/booking/event::event_id/user::user_id", repo.BookEvent)
 	api.Get("/user/:user_id", repo.GetUser)
 	api.Get("/event/:event_id", repo.GetEvent)
-	api.Get("/search/:query", repo.SearchEvent)
+	api.Get("/search/event/:query", repo.SearchEvent)
+	api.Put("/update/event/:event_id", repo.UpdateEvent)
+	api.Put("/update/user/:user_id", repo.UpdateUserProfile)
+	api.Delete("/delete/event/:event_id", repo.DeleteEvent)
+	api.Put("/update/organizer/:organizer_id", repo.UpdateOrganizerProfile)
 	api.Get("/organizer/:organizer_id", repo.GetOrganizer)
 }
 

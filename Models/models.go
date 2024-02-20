@@ -26,6 +26,10 @@ type  Event struct {
 	UpdatedAt time.Time 		`json:"updated_at"`
 }
 
+type ArchiveEvent struct{
+	Data *Event
+}
+
 
 type LoginData struct{
 	Email string
@@ -45,7 +49,10 @@ type  RegularUser struct {				//User Object
 	Password 			*string    	`json:"password"`
 	Fullname 			*string    	`json:"fullname"`
 	Organization  		*string    	`json:"organization"`
+	Role				string		`json:"role" validate:"required eq=organizer|eq=user" default:"user"`
 	EventsAttending  	[]*Event    `xorm:"'events_attending' many2many:event_user" json:"events_attending"`	//events a user has registered to attend
+	Token				string		`json:"token"`
+	Refresh_Token		string		`json:"refresh_token"`
 	CreatedAt 			time.Time 	`json:"created_at"`
 	UpdatedAt 			time.Time 	`json:"updated_at"`
 }
@@ -129,7 +136,7 @@ func DBConnection() (*xorm.Engine, error) {
 	if err := engine.Sync(
 			new(Event), new(RegularUser), new(Organizer), new(Ticket), 
 			new(Registration),  new(EventUser), new(Login), new(LoginData),
-
+			new(ArchiveEvent),
 		); err != nil{
 		return nil, err
 	}

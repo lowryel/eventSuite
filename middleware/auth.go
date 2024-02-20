@@ -15,6 +15,7 @@ import (
 
 	// _ "github.com/joho/godotenv"
 	"github.com/patrickmn/go-cache"
+	// "xorm.io/xorm"
 )
 
 // JWTClaims struct represents the claims for JWT
@@ -111,6 +112,17 @@ func parseAndValidateToken(tokenString string) (*jwt.Token, error) {
 var (
   ErrorToken= errors.New("token expired")
 )
+
+// func InserToken(db *xorm.Engine, tableName string, token string, username string) (int64, error){
+//     // SQL statement
+//     // query := ( "UPDATE regular_user SET token = ? WHERE username = ?", token, username)
+//     // Execute the SQL statement
+//     _ = db.SQL("UPDATE regular_user SET token = ? WHERE username = ?", token, username)
+//     // if err != nil{
+//     //     return 0, nil
+//     // }
+//     return 0, nil
+// }
 
 // ProtectedRoute is a protected route that requires a valid JWT token
 // func ProtectedRoute(c *fiber.Ctx) error {
