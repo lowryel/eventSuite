@@ -35,6 +35,8 @@ type LoginData struct{
 	Email string
 	Username string
 	Password string
+	Phone	string
+	Role	string
 }
 
 type Login struct{
@@ -49,7 +51,7 @@ type  RegularUser struct {				//User Object
 	Password 			*string    	`json:"password"`
 	Fullname 			*string    	`json:"fullname"`
 	Organization  		*string    	`json:"organization"`
-	Role				string		`json:"role" validate:"required eq=organizer|eq=user" default:"user"`
+	Role				string		`json:"role" validate:"required eq=user" default:"user"`
 	EventsAttending  	[]*Event    `xorm:"'events_attending' many2many:event_user" json:"events_attending"`	//events a user has registered to attend
 	Token				string		`json:"token"`
 	Refresh_Token		string		`json:"refresh_token"`
@@ -67,9 +69,11 @@ type  Organizer struct {			// Events Manager
 	ID        		int    			`xorm:"'id' pk autoincr"`
 	Name     		*string    		`json:"name"`
 	Description 	*string    		`json:"description"`
-	ContactEmail 	*string    		`xorm:"unique" json:"email"`
-	ContactPhone 	*string    		`xorm:"unique" json:"phone"`
-	EventsManaged  	[]*Event    	`xorm:"unique" json:"events_managed"`      //xorm:"unique" 
+	Email 	*string    		`xorm:"unique" json:"email"`
+	Phone 	*string    		`xorm:"unique" json:"phone"`
+	Password 		*string    		`json:"password"`
+	Role			string		`json:"role" validate:"required eq=organizer"`
+	EventsManaged  	[]*Event    	`xorm:"unique" json:"events_managed"`      //:"unique" 
 	CreatedAt 		time.Time 		`json:"created_at"`
 	UpdatedAt 		time.Time 		`json:"updated_at"`
 }

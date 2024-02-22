@@ -1,17 +1,17 @@
 package middleware
 
 import (
+	"errors"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
-	"fmt"
-	"errors"
-	"net/http"
 
-
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt"
+	// logger "github.com/lowry/eventsuite/Logger"
+	"golang.org/x/crypto/bcrypt"
 
 	// _ "github.com/joho/godotenv"
 	"github.com/patrickmn/go-cache"
@@ -20,9 +20,11 @@ import (
 
 // JWTClaims struct represents the claims for JWT
 type JWTClaims struct {
-    Email       string    	`json:"email"`
-    Username string 		`json:"username"`
-    jwt.StandardClaims
+  UserID      int       `json:"id"`
+  Email       string    `json:"email"`
+  Username    string 		`json:"username"`
+  Role        string    `json:"role"`
+  jwt.StandardClaims
 }
 
 
@@ -42,18 +44,48 @@ func HashesMatch(hash, password string) error {
 }
 
 // generate jwt token with username and email
-func GenerateToken(email, username string ) (string, error) {
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, &JWTClaims{
-        Username: username,
-        StandardClaims: jwt.StandardClaims{
-            ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
-        },
-    })
+func GenerateToken(email, role string, userId int) (string, error) {
+    claims := JWTClaims{
+      UserID: userId,
+      Email: email,
+      Role: role,
+      StandardClaims: jwt.StandardClaims{
+        ExpiresAt: time.Now().Add(time.Minute * 59).Unix(),
+      },
+    }
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
     tokenString, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
     if err != nil {
         return "", err
     }
     return tokenString, nil
+}
+
+// DecodeToken decodes and validates the JWT token and extracts the claims.
+func DecodeToken(tokenString string) (*JWTClaims, error) {
+    // Parse and validate the JWT token
+    token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+        return []byte(os.Getenv("SECRET_KEY")), nil
+    })
+    if err != nil || !token.Valid {
+        return nil, fmt.Errorf("invalid or expired token: %v", err)
+    }
+
+    // Extract the claims from the token
+    claims, ok := token.Claims.(*JWTClaims)
+    if !ok {
+        return nil, fmt.Errorf("failed to extract claims from token")
+    }
+
+    return claims, err
+}
+
+func GetIdFromToken(tokenString string) (int, error){
+  claims, err := DecodeToken(tokenString[7:])
+  if err != nil{
+    log.Println(err)
+  }
+  return claims.UserID,err
 }
 
 
@@ -113,16 +145,6 @@ var (
   ErrorToken= errors.New("token expired")
 )
 
-// func InserToken(db *xorm.Engine, tableName string, token string, username string) (int64, error){
-//     // SQL statement
-//     // query := ( "UPDATE regular_user SET token = ? WHERE username = ?", token, username)
-//     // Execute the SQL statement
-//     _ = db.SQL("UPDATE regular_user SET token = ? WHERE username = ?", token, username)
-//     // if err != nil{
-//     //     return 0, nil
-//     // }
-//     return 0, nil
-// }
 
 // ProtectedRoute is a protected route that requires a valid JWT token
 // func ProtectedRoute(c *fiber.Ctx) error {
