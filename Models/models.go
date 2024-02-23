@@ -92,9 +92,9 @@ const (
 type  Ticket struct {
 	ID        			int     		`xorm:"'id' pk autoincr"`
 	Event_id 			int       		`json:"event_id"`
-	Type     			TicketType    	`json:"type"`
+	Type     			TicketType    	`xorm:"unique" json:"type"`
 	Price    			float64   		`json:"price"`
-	QuantityAvailable 	int    		`json:"quantity_available"`
+	QuantityAvailable 	int    			`json:"quantity_available"` // Total tickets available
 	StartSaleDate 		*string 		`json:"sale_start"`
 	EndSaleDate 		*string 		`json:"sale_end"`
 }
@@ -123,7 +123,17 @@ type Registration struct {
 	UpdatedAt 			time.Time 		`json:"updated_at"`
 }
 
-var engine *xorm.Engine
+
+type EventAttendee struct{// EventAttendee is someone who made a booking. This will contain info of attendees sourced from RegularUser table
+	Email 				*string    	`xorm:"unique" json:"email"`
+	Fullname 			*string    	`json:"fullname"`
+	Organization  		*string    	`json:"organization"`
+	Username			*string		`json:"username"`
+
+} 
+
+
+// var engine *xorm.Engine
 
 func DBConnection() (*xorm.Engine, error) {
 	// ty := Ticket{}

@@ -80,12 +80,12 @@ func DecodeToken(tokenString string) (*JWTClaims, error) {
     return claims, err
 }
 
-func GetIdFromToken(tokenString string) (int, error){
+func GetIdFromToken(tokenString string) (*JWTClaims, error){
   claims, err := DecodeToken(tokenString[7:])
   if err != nil{
     log.Println(err)
   }
-  return claims.UserID,err
+  return claims, err
 }
 
 

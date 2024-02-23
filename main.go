@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
+	// "os"
 	"time"
 
 	// "os"
@@ -20,21 +20,18 @@ import (
 	"xorm.io/xorm"
 )
 
-var (
-	Engine *xorm.Engine
-)
 
 type Repository struct {
 	DBConn *xorm.Engine
 }
 
-var (
-	secret_key = os.Getenv("SECRET_KEY")
-)
+// var (
+// 	secret_key = os.Getenv("SECRET_KEY")
+// )
 
 func (repo *Repository) CreateEvent(ctx *fiber.Ctx) error {
 	tokenString := ctx.Get("Authorization")
-	claims, err := middleware.DecodeToken(tokenString[7:])
+	claims, err := middleware.GetIdFromToken(tokenString)
 	if err != nil {
 		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "bad request"})
 		return err
@@ -337,6 +334,17 @@ func (repo *Repository) CreateOrganizer(ctx *fiber.Ctx) error {
 func (repo *Repository) CreateTicket(ctx *fiber.Ctx) error {
 	event_id := ctx.Params("id")
 	fmt.Println(event_id)
+	tokenString := ctx.Get("Authorization")
+	claims, err := middleware.GetIdFromToken(tokenString)
+	if err != nil{
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "Invalid request"})
+		return err		
+	}
+	if claims.Role != "organizer"{
+		logger.DevLog("Unauthorized access")
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "Unauthorized access"})
+		return err
+	}
 	ticket := models.Ticket{}
 	event := models.Event{}
 	if err := ctx.BodyParser(&ticket); err != nil {
@@ -349,7 +357,7 @@ func (repo *Repository) CreateTicket(ctx *fiber.Ctx) error {
 	//  Begin transaction
 	session := repo.DBConn.NewSession()
 	defer session.Close()
-	err := session.Begin()
+	err = session.Begin()
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -403,11 +411,12 @@ func (repo *Repository) BookEvent(ctx *fiber.Ctx) error {
 	// Extract the user ID from the JWT token included in the request headers
     tokenString := ctx.Get("Authorization")
 	logger.DevLog(tokenString)
-	claims, err := middleware.DecodeToken(tokenString[7:])
+	claims, err := middleware.GetIdFromToken(tokenString)
 	if err != nil{
 		logger.DevLog(err)
 		return nil
 	}
+	// handle role based access
 	if claims.Role != "user"{
 		logger.DevLog("organizer can't make booking")
 		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{"error": "organizer can't make booking"})
@@ -421,8 +430,8 @@ func (repo *Repository) BookEvent(ctx *fiber.Ctx) error {
 	event := models.Event{}
 	eventUser := models.EventUser{}
 	// Validate event and user inputs
-	if event_id == "" || claims.UserID <=0 {
-		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "no event or user referenced"})
+	if event_id == ""{
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "empty event id"})
 	}
 
 	// Begin transaction
@@ -434,6 +443,13 @@ func (repo *Repository) BookEvent(ctx *fiber.Ctx) error {
 	_, err = repo.DBConn.ID(event_id).Get(&event)
 	if err != nil {
 		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "invalid event request"})
+		session.Rollback()
+		return err
+	}
+	// fetch user first in order to be able to update it * made this mistake earlier and it worried me a lot *
+	_, err = repo.DBConn.ID(claims.UserID).Get(&user)
+	if err != nil {
+		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "invalid user action"})
 		session.Rollback()
 		return err
 	}
@@ -454,12 +470,13 @@ func (repo *Repository) BookEvent(ctx *fiber.Ctx) error {
 	user.EventsAttending = append(user.EventsAttending, &event)
 	if event.ID == 0 {
 		session.Rollback()
+		logger.DevLog("no event referenced")
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "no event referenced"})
 	}
 	log.Println(user.ID, event.ID)
 	if claims.UserID <= 0 {
 		session.Rollback()
-		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "no event referenced"})
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "no user referenced"})
 	}
 
 	eventData := EventData{
@@ -467,7 +484,7 @@ func (repo *Repository) BookEvent(ctx *fiber.Ctx) error {
 	}
 
 	// save user record
-	_, err = session.ID(claims.UserID).Update(&user)
+	_, err = repo.DBConn.ID(claims.UserID).Update(&user) // update user with new events
 	if err != nil {
 		session.Rollback()
 		return err
@@ -476,7 +493,7 @@ func (repo *Repository) BookEvent(ctx *fiber.Ctx) error {
 	// save event user record
 	eventUser.EventID = event.ID
 	eventUser.UserID = claims.UserID
-	_, err = session.Insert(&eventUser)
+	_, err = repo.DBConn.Insert(&eventUser)
 	if err != nil {
 		session.Rollback()
 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "failed to insert organizer"})
@@ -525,17 +542,17 @@ func (repo *Repository) AllEvents(ctx *fiber.Ctx) error {
 
 func (repo *Repository) GetUser(ctx *fiber.Ctx) error {
 	tokenString := ctx.Get("Authorization")
-	claims, err := middleware.DecodeToken(tokenString[7:])
+	claims, err := middleware.GetIdFromToken(tokenString)
 	if err != nil {
 		log.Fatal("token not found")
 		return err
 	}
-	user_id := claims.UserID
 	if claims.Role != "user"{
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{
 			"error":"Unauthorized access",
 		})
 	}
+	user_id := claims.UserID
 	userData := models.RegularUser{}
 
 	// Begin transaction
@@ -574,7 +591,7 @@ func (repo *Repository) GetUser(ctx *fiber.Ctx) error {
 
 func (repo *Repository) GetOrganizer(ctx *fiber.Ctx) error {
 	tokenString := ctx.Get("Authorization")
-	claims, err := middleware.DecodeToken(tokenString[7:])
+	claims, err := middleware.GetIdFromToken(tokenString)
 	if err != nil {
 		logger.DevLog("failed to get organizer ID")
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "invalid request"})
@@ -657,7 +674,7 @@ func (repo *Repository) GetEvent(ctx *fiber.Ctx) error {
 
 func (repo *Repository) UpdateEvent(ctx *fiber.Ctx) error {
 	tokenString := ctx.Get("Authorization")
-	claims, err := middleware.DecodeToken(tokenString[7:])
+	claims, err := middleware.GetIdFromToken(tokenString)
 	if err != nil{
 		logger.DevLog("Invalid token string")
 		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{"error":"Invalid token string"})
@@ -881,11 +898,6 @@ func (repo *Repository) DeleteEvent(ctx *fiber.Ctx) error {
 	return err
 }
 
-// ARCHIVE EVENT
-
-// if user.Role == "organizer"; user is inserted into the organizer table and also the user table for login purposes
-// if user.Role == "user"
-
 
 // get users subscribed to events
 func (repo *Repository) SubscribedEvents(ctx *fiber.Ctx) error {
@@ -909,16 +921,11 @@ func (repo *Repository) SubscribedEvents(ctx *fiber.Ctx) error {
 		return err
 	}
 	for _, event := range event_user {
-		logger.DevLog(event.UserID)
 		_ = repo.DBConn.Where("id = ? AND organizer_id = ?",event.EventID, organizer_id).Find(&events)
 		_ = repo.DBConn.Where("id = ?", event.UserID).Find(&users)
 	}
-
-	ctx.JSON(&fiber.Map{"data":events, "user":users})
-	// logger.DevLog(event_user)
-	return err
+	return ctx.JSON(&fiber.Map{"users (attendees)":users, "booked events":events})
 }
-
 
 
 func (repo *Repository) SearchEvent(ctx *fiber.Ctx) error {
@@ -939,6 +946,109 @@ func (repo *Repository) SearchEvent(ctx *fiber.Ctx) error {
 }
 
 
+func (repo *Repository) AttendeeRegistration(ctx *fiber.Ctx) error {// register and set status to Pending
+	ticket_id := ctx.Params("ticket_id")
+	tokenString := ctx.Get("Authorization")
+	claims, err := middleware.GetIdFromToken(tokenString)
+	if err != nil{
+		logger.DevLog(err)
+		return nil
+	}
+	if claims.Role != "user"{
+		logger.DevLog("Unauthorized")
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{"error":"Unauthorized access"})
+	}
+	ticket := models.Ticket{}
+	register := models.Registration{}
+	err = ctx.BodyParser(&register)
+	if err != nil{
+		logger.DevLog(err)
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid data"})
+	}
+	if ticket_id == ""{
+		logger.DevLog(err)
+		return err
+	}
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err = session.Begin()
+	if err!= nil{
+		logger.DevLog("Begin session failed")
+		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"session closed"})
+	}
+	_, err = repo.DBConn.Where("id = ?", ticket_id).Get(&ticket)
+	if err!= nil{
+		logger.DevLog("error getting ticket")
+		session.Rollback()
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"error fetching ticket"})
+	}
+
+	register.User_id = claims.UserID
+	register.Status = models.Pending
+	register.Ticket_id = ticket.ID
+	register.CreatedAt = time.Now().Local()
+	_, err = repo.DBConn.Insert(&register) //
+	if err!= nil{
+		logger.DevLog("error during registration")
+		session.Rollback()
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"registration failed"})
+	}
+	err = session.Commit()
+	if err != nil{
+		logger.DevLog("Transaction failed")
+		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"failed to commit data"})
+	}
+	return ctx.Status(http.StatusCreated).JSON(&fiber.Map{"message":"registration complete"})
+}
+
+
+func (repo *Repository) ConfirmRegistration(ctx *fiber.Ctx) error { // confirm by PUT after payment is done or something
+	registration_id := ctx.Params("id")
+	tokenString := ctx.Get("Authorization")
+	claims, err := middleware.GetIdFromToken(tokenString)
+	if err != nil{
+		logger.DevLog(err)
+		return nil
+	}
+	if claims.Role != "organizer"{
+		logger.DevLog("Unauthorized")
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{"error":"Unauthorized access"})
+	}
+	register := models.Registration{}
+
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err = session.Begin()
+	if err!= nil{
+		logger.DevLog("Begin session failed")
+		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"session closed"})
+	}
+	_, err = repo.DBConn.Where("id = ?", registration_id).Get(&register)
+	if err!= nil{
+		logger.DevLog("error getting registration")
+		session.Rollback()
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"registration failed"})
+	}
+	// Have to do Some plenty checks over here
+	// ticket total, payment status, elapsed event date, etc
+	register.UpdatedAt = time.Now().Local()
+	register.Status = models.Confirmed
+	_, err = repo.DBConn.ID(register.ID).Update(&register)
+	if err!= nil{
+		logger.DevLog("registration status update failed")
+		session.Rollback()
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"registration status update failed"})
+	}
+
+	err = session.Commit()
+	if err != nil{
+		logger.DevLog("Transaction failed")
+		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"failed to commit data"})
+	}
+	return ctx.Status(http.StatusCreated).JSON(&fiber.Map{"message":"registration complete"})
+}
+
+
 func (repo *Repository) Routes(app *fiber.App) {
 	api := app.Group("api")
 	api.Get("/", func(c *fiber.Ctx) error {
@@ -946,24 +1056,26 @@ func (repo *Repository) Routes(app *fiber.App) {
 		return nil
 	})
 
-	api.Post("/user/create", repo.CreateUser)
-	api.Post("/organizer/create", repo.CreateOrganizer)
-	api.Post("/ticket/create/:id", repo.CreateTicket)
 	api.Get("/events", repo.AllEvents)
 	api.Post("/login", repo.LoginHandler)
+	api.Post("/user/create", repo.CreateUser)
+	api.Get("/event/:event_id", repo.GetEvent)
 	api.Get("/search/event/:query", repo.SearchEvent)
+	api.Post("/organizer/create", repo.CreateOrganizer)
 	
 	app.Use(middleware.JWTMiddleware())
-	api.Post("/event/create", repo.CreateEvent)
-	api.Get("/subevents", repo.SubscribedEvents)
-	api.Put("/event/booking/event::event_id", repo.BookEvent)
 	api.Get("/user/me", repo.GetUser)
-	api.Get("/event/:event_id", repo.GetEvent)
-	api.Put("/update/event/:event_id", repo.UpdateEvent)
-	api.Put("/user/update", repo.UpdateUserProfile)
-	api.Delete("/delete/event/:event_id", repo.DeleteEvent)
-	api.Put("/update/organizer/me", repo.UpdateOrganizerProfile)
+	api.Post("/event/create", repo.CreateEvent)
 	api.Get("/organizer/me", repo.GetOrganizer)
+	api.Get("/subevents", repo.SubscribedEvents)
+	api.Put("/user/update", repo.UpdateUserProfile)
+	api.Post("/ticket/create/:id", repo.CreateTicket)
+	api.Put("/update/event/:event_id", repo.UpdateEvent)
+	api.Post("/registration/user/:ticket_id", repo.AttendeeRegistration)
+	api.Put("/registration/confirm/:id", repo.ConfirmRegistration)
+	api.Delete("/delete/event/:event_id", repo.DeleteEvent)
+	api.Put("/event/booking/:event_id", repo.BookEvent)
+	api.Put("/update/organizer/me", repo.UpdateOrganizerProfile)
 }
 
 func main() {
