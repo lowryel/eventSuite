@@ -1,15 +1,18 @@
 package middleware
 
 import (
-	"github.com/lowry/eventsuite/Models"
 	"errors"
+  "log"
+
+	logger "github.com/lowry/eventsuite/Logger"
+	"github.com/lowry/eventsuite/Models"
 )
 
 
 func ValidateEvent(event *models.Event) error {
 
   if event.Title == nil {
-    return errors.New("title is required") 
+    return errors.New("title is required")
   }
 
   return nil
@@ -29,4 +32,24 @@ func ValidateUser(user *models.RegularUser) (error) {
 }
 
 
+func TicketAvailable(ticketType string, quantity, total_available int) (int, error){
+  var err error
+  if quantity > total_available{
+    logger.DevLog("ticket exhausted")
+    log.Panic("ticket out of stock")
+    return 0, nil
+  }
+  switch ticketType{
+  case "Student":
+    total_available = total_available - quantity
+  case "VIP":
+    total_available = total_available - quantity
+  case "General Admission":
+    total_available = total_available - quantity
+  case "Early Bird":
+    total_available = total_available - quantity
+  default:
+  }
+  return total_available, err
+}
 

@@ -108,7 +108,7 @@ func (repo *Repository) CreateEvent(ctx *fiber.Ctx) error {
 		})
 	}
 	// repo.DBConn.Join("INNER",  "event_attendee", "limit 1", "event_attendee.event_id = event.id",)
-	ctx.Status(http.StatusCreated).JSON(&fiber.Map{"data": event, "message": "user created"})
+	ctx.Status(http.StatusCreated).JSON(&fiber.Map{"event": event, "message": "user created"})
 	return err
 }
 
@@ -174,7 +174,7 @@ func (repo *Repository) CreateUser(ctx *fiber.Ctx) error {
 			"error": "failed transaction",
 		})
 	}
-	ctx.Status(http.StatusCreated).JSON(&fiber.Map{"data": user, "message": "user created"})
+	ctx.Status(http.StatusCreated).JSON(&fiber.Map{"user data": user, "message": "user created"})
 	return err
 }
 
@@ -375,6 +375,7 @@ func (repo *Repository) CreateTicket(ctx *fiber.Ctx) error {
 		return err
 	}
 	ticket.Event_id = event.ID
+	ticket.Organizer_id = claims.UserID
 	if event.ID <= 0 {
 		ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "such event doesn't exist"})
 		session.Rollback()
@@ -391,7 +392,7 @@ func (repo *Repository) CreateTicket(ctx *fiber.Ctx) error {
 	if err := session.Commit(); err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "transaction failed"})
 	}
-	ctx.Status(http.StatusCreated).JSON(&fiber.Map{"data": ticket})
+	ctx.Status(http.StatusCreated).JSON(&fiber.Map{"ticket data": ticket})
 	return err
 }
 
@@ -505,7 +506,7 @@ func (repo *Repository) BookEvent(ctx *fiber.Ctx) error {
 	}
 	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
 		"message": "event booked successfully",
-		"data":    eventData,
+		"event data":    eventData,
 	})
 	return err
 }
@@ -535,7 +536,7 @@ func (repo *Repository) AllEvents(ctx *fiber.Ctx) error {
 		return err
 	}
 	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
-		"data": events,
+		"events data": events,
 	})
 	return err
 }
@@ -584,7 +585,7 @@ func (repo *Repository) GetUser(ctx *fiber.Ctx) error {
 		return err
 	}
 	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
-		"data": userData,
+		"user data": userData,
 	})
 	return err
 }
@@ -631,7 +632,7 @@ func (repo *Repository) GetOrganizer(ctx *fiber.Ctx) error {
 		return err
 	}
 	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
-		"data": organizerData,
+		"organizer data": organizerData,
 	})
 	return err
 }
@@ -666,7 +667,7 @@ func (repo *Repository) GetEvent(ctx *fiber.Ctx) error {
 		return err
 	}
 	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
-		"data": eventData,
+		"event data": eventData,
 	})
 	return err
 }
@@ -940,7 +941,7 @@ func (repo *Repository) SearchEvent(ctx *fiber.Ctx) error {
 	}
 	log.Println(events)
 	ctx.Status(http.StatusOK).JSON(&fiber.Map{
-		"data": events,
+		"Searched response": events,
 	})
 	return err
 }
@@ -982,6 +983,22 @@ func (repo *Repository) AttendeeRegistration(ctx *fiber.Ctx) error {// register 
 		session.Rollback()
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"error fetching ticket"})
 	}
+	ticketsAvailable, err := middleware.TicketAvailable(string(ticket.Type), register.Quantity, ticket.QuantityAvailable)
+	if err != nil{
+		logger.DevLog("Ticket exhausted")
+		return err
+	}
+
+	logger.DevLog(ticket.Type)
+	logger.DevLog(ticketsAvailable)
+	// update ticket available
+	ticket.QuantityAvailable = ticketsAvailable
+	_, err = repo.DBConn.ID(ticket.ID).Update(&ticket)
+	if err!= nil{
+		logger.DevLog("error updating ticket")
+		session.Rollback()
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"error updating ticket"})
+	}
 
 	register.User_id = claims.UserID
 	register.Status = models.Pending
@@ -1001,6 +1018,47 @@ func (repo *Repository) AttendeeRegistration(ctx *fiber.Ctx) error {// register 
 	return ctx.Status(http.StatusCreated).JSON(&fiber.Map{"message":"registration complete"})
 }
 
+
+func (repo *Repository) ListOrganizerTickets(ctx *fiber.Ctx) error {
+	tokenString := ctx.Get("Authorization")
+	claims, err := middleware.GetIdFromToken(tokenString)
+	if err != nil{
+		logger.DevLog("invalid token")
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid token"})
+	}
+	tickets := []models.Ticket{}
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err = session.Begin()
+	if err != nil{
+		logger.DevLog("Beginning db session failed")
+		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"session closed"})
+	}
+	// get tickets belonging to an organizer
+	if claims.Role != "organizer"{
+		logger.DevLog("Unauthorized access")
+		session.Rollback()
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{"error":"Unauthorized access"})
+	}
+
+	err = repo.DBConn.Where("organizer_id = ?", claims.UserID).Find(&tickets)
+	if err!= nil{
+		logger.DevLog("error getting ticket")
+		session.Rollback()
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"error fetching ticket"})
+	}
+	err = session.Commit()
+	if err != nil{
+		logger.DevLog("Transaction failed")
+		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"failed to commit data"})
+	}
+	return ctx.Status(http.StatusCreated).JSON(&fiber.Map{"tickets":tickets})
+}
+
+
+
+
+// need a fix. Too open for every ORGANIZER
 
 func (repo *Repository) ConfirmRegistration(ctx *fiber.Ctx) error { // confirm by PUT after payment is done or something
 	registration_id := ctx.Params("id")
@@ -1030,7 +1088,7 @@ func (repo *Repository) ConfirmRegistration(ctx *fiber.Ctx) error { // confirm b
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"registration failed"})
 	}
 	// Have to do Some plenty checks over here
-	// ticket total, payment status, elapsed event date, etc
+	// ticket total, payment status, elapsed event date, etc total cost of tickets
 	register.UpdatedAt = time.Now().Local()
 	register.Status = models.Confirmed
 	_, err = repo.DBConn.ID(register.ID).Update(&register)
@@ -1045,7 +1103,60 @@ func (repo *Repository) ConfirmRegistration(ctx *fiber.Ctx) error { // confirm b
 		logger.DevLog("Transaction failed")
 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"failed to commit data"})
 	}
-	return ctx.Status(http.StatusCreated).JSON(&fiber.Map{"message":"registration complete"})
+	return ctx.Status(http.StatusCreated).JSON(&fiber.Map{"message":"Registration Confirmed"})
+}
+
+
+func (repo *Repository) ORGANIZERREGISTRATIONS(ctx *fiber.Ctx) error{
+	tokenString := ctx.Get("Authorization")
+	claims, err := middleware.GetIdFromToken(tokenString)
+	if err != nil{
+		logger.DevLog(err)
+		return nil
+	}
+	if claims.Role != "organizer"{
+		logger.DevLog("Unauthorized")
+		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{"error":"Unauthorized access"})
+	}
+	tickets := []models.Ticket{}
+	registration := []models.Registration{}
+	session := repo.DBConn.NewSession()
+	defer session.Close()
+	err = session.Begin()
+	if err != nil{
+		logger.DevLog("Beginning db session failed")
+		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"session closed"})
+	}
+	err = repo.DBConn.Where("organizer_id = ?", claims.UserID).Find(&tickets)
+	if err!= nil{
+		logger.DevLog(err)
+		session.Rollback()
+		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"error fetching ticket"})
+	}
+
+	for _, ticket := range tickets{
+		err := repo.DBConn.Where(" ticket_id = ?", ticket.ID).Find(&registration)
+		if err != nil{
+			logger.DevLog("table does not exist")
+			return err
+		}
+		// Commit transaction
+		err = session.Commit()
+		if err != nil {
+			return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{
+				"error": "failed transaction",
+			})
+		}
+	}
+	// Commit transaction
+	err = session.Commit()
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{
+			"error": "failed transaction",
+		})
+	}
+	logger.DevLog("----------------")
+	return ctx.Status(http.StatusOK).JSON(&fiber.Map{"registration":registration})
 }
 
 
@@ -1066,10 +1177,12 @@ func (repo *Repository) Routes(app *fiber.App) {
 	app.Use(middleware.JWTMiddleware())
 	api.Get("/user/me", repo.GetUser)
 	api.Post("/event/create", repo.CreateEvent)
+	api.Get("/organizer/registrations", repo.ORGANIZERREGISTRATIONS)
 	api.Get("/organizer/me", repo.GetOrganizer)
 	api.Get("/subevents", repo.SubscribedEvents)
 	api.Put("/user/update", repo.UpdateUserProfile)
 	api.Post("/ticket/create/:id", repo.CreateTicket)
+	api.Get("/tickets", repo.ListOrganizerTickets)
 	api.Put("/update/event/:event_id", repo.UpdateEvent)
 	api.Post("/registration/user/:ticket_id", repo.AttendeeRegistration)
 	api.Put("/registration/confirm/:id", repo.ConfirmRegistration)
@@ -1077,6 +1190,7 @@ func (repo *Repository) Routes(app *fiber.App) {
 	api.Put("/event/booking/:event_id", repo.BookEvent)
 	api.Put("/update/organizer/me", repo.UpdateOrganizerProfile)
 }
+
 
 func main() {
 	fmt.Println("Hello World, An Event Manager Cooking")

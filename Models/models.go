@@ -91,8 +91,9 @@ const (
 
 type  Ticket struct {
 	ID        			int     		`xorm:"'id' pk autoincr"`
+	Organizer_id			int				`json:"organizer_id"`
 	Event_id 			int       		`json:"event_id"`
-	Type     			TicketType    	`xorm:"unique" json:"type"`
+	Type     			TicketType    	`json:"type"`
 	Price    			float64   		`json:"price"`
 	QuantityAvailable 	int    			`json:"quantity_available"` // Total tickets available
 	StartSaleDate 		*string 		`json:"sale_start"`
