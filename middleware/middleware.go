@@ -1,8 +1,12 @@
 package middleware
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"errors"
-  "log"
+
+	"log"
+	// "math/big"
 
 	logger "github.com/lowry/eventsuite/Logger"
 	"github.com/lowry/eventsuite/Models"
@@ -51,5 +55,12 @@ func TicketAvailable(ticketType string, quantity, total_available int) (int, err
   default:
   }
   return total_available, err
+}
+
+func RandomIDGen(id uint32) uint32 {
+  binary.Read(rand.Reader, binary.LittleEndian, &id)
+
+  logger.DevLog(id)
+  return id
 }
 

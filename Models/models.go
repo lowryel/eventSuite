@@ -14,13 +14,13 @@ import (
 
 //  Models
 type  Event struct {
-	ID        		int     	`xorm:"'id' unique pk autoincr"`
+	ID        		uint32     	`xorm:"'id' unique pk autoincr"`
 	Title     		*string    	`json:"title"`
 	Description 	*string    	`json:"description"`
-	StartDate 		*string 	`json:"start_date"`
-	EndDate   		*string 	`json:"end_date"`
+	StartDate 		string 	`json:"start_date"`
+	EndDate   		string 	`json:"end_date"`
 	Location  		*string    	`json:"location"`
-	Organizer_id 	int       	`json:"organizer_id"`
+	Organizer_id 	uint32       	`json:"organizer_id"`
 	// Attendees	[]RegularUser		`xorm:"'attendees' many2many:event_user;"`
 	CreatedAt time.Time 		`json:"created_at"`
 	UpdatedAt time.Time 		`json:"updated_at"`
@@ -45,7 +45,7 @@ type Login struct{
 }
 
 type  RegularUser struct {				//User Object
-	ID        			int     	`xorm:"'id' pk autoincr"`
+	ID        			uint32     	`xorm:"'id' pk autoincr"`
 	Username     		*string    	`json:"username"`
 	Email 				*string    	`xorm:"unique" json:"email"`
 	Password 			*string    	`json:"password"`
@@ -61,12 +61,12 @@ type  RegularUser struct {				//User Object
 
 type  EventUser struct {			// Junction table for querying many-to-many relationships
     ID     	int 	`xorm:"'id' pk autoincr"`
-	EventID	int		`xorm:"'event_id' pk"`
-	UserID	int		`xorm:"'user_id' pk"`
+	EventID	uint32		`xorm:"'event_id' pk"`
+	UserID	uint32		`xorm:"'user_id' pk"`
 }
 
 type  Organizer struct {			// Events Manager
-	ID        		int    			`xorm:"'id' pk autoincr"`
+	ID        		uint32    			`xorm:"'id' pk"`
 	Name     		*string    		`json:"name"`
 	Description 	*string    		`json:"description"`
 	Email 	*string    		`xorm:"unique" json:"email"`
@@ -90,9 +90,9 @@ const (
 )
 
 type  Ticket struct {
-	ID        			int     		`xorm:"'id' pk autoincr"`
-	Organizer_id			int				`json:"organizer_id"`
-	Event_id 			int       		`json:"event_id"`
+	ID        			uint32     		`xorm:"'id' pk autoincr"`
+	Organizer_id		uint32				`json:"organizer_id"`
+	Event_id 			uint32       		`json:"event_id"`
 	Type     			TicketType    	`json:"type"`
 	Price    			float64   		`json:"price"`
 	QuantityAvailable 	int    			`json:"quantity_available"` // Total tickets available
@@ -114,9 +114,9 @@ const (
 
 // Registration for the Events
 type Registration struct {
-	ID        			int     		`xorm:"'id' pk autoincr"`
-	User_id 			int       		`json:"user_id"`
-	Ticket_id 			int       		`json:"ticket_id"`
+	ID        			uint32     		`xorm:"'id' pk autoincr"`
+	User_id 			uint32       		`json:"user_id"`
+	Ticket_id 			uint32       		`json:"ticket_id"`
 	Quantity 			int       		`json:"quantity"` 	// Number of Tickets registered
 	RegistrationDate 	time.Time 		`json:"registration_date"`
 	Status 				StatusChoice   `json:"status"`

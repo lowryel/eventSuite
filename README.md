@@ -6,7 +6,11 @@
     err := repo.DBConn.SQL("SELECT id, title, description, location, start_date, end_date, organizer_id FROM event WHERE to_tsvector(coalesce(start_date, '') || title || ' ' || coalesce(description, '')) @@ websearch_to_tsquery(?)", queryParam).Find(&events)
 ```
 
-
+<!-- JOIN query of 3 models -->
+* querying 3 models data at a time instead of 3 separate times reduces trips to the db hence improving performance *
+```sql
+    select * from registration left join ticket on registration.ticket_id = ticket.id left join organizer on ticket.organizer_id = organizer.id where registration.id = ?;
+```
 
 
 ##### Event:

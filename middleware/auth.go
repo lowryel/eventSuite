@@ -20,7 +20,7 @@ import (
 
 // JWTClaims struct represents the claims for JWT
 type JWTClaims struct {
-  UserID      int       `json:"id"`
+  UserID      uint32       `json:"id"`
   Email       string    `json:"email"`
   Username    string 		`json:"username"`
   Role        string    `json:"role"`
@@ -44,7 +44,7 @@ func HashesMatch(hash, password string) error {
 }
 
 // generate jwt token with username and email
-func GenerateToken(email, role string, userId int) (string, error) {
+func GenerateToken(email, role string, userId uint32) (string, error) {
     claims := JWTClaims{
       UserID: userId,
       Email: email,
