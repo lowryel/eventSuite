@@ -587,7 +587,7 @@ func (repo *Repository) GetUser(ctx *fiber.Ctx) error {
 	// Commit transaction
 	err = session.Commit()
 	if err != nil {
-		log.Fatal("Transaction failed")
+		log.Println("Transaction failed")
 		return err
 	}
 	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
@@ -634,7 +634,7 @@ func (repo *Repository) GetOrganizer(ctx *fiber.Ctx) error {
 	// Commit transaction
 	err = session.Commit()
 	if err != nil {
-		log.Fatal("Transaction failed")
+		log.Println("Transaction failed")
 		return err
 	}
 	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
@@ -669,7 +669,7 @@ func (repo *Repository) GetEvent(ctx *fiber.Ctx) error {
 	// Commit transaction
 	err = session.Commit()
 	if err != nil {
-		log.Fatal("Transaction failed")
+		log.Println("Transaction failed")
 		return err
 	}
 	ctx.Status(http.StatusCreated).JSON(&fiber.Map{
@@ -791,7 +791,7 @@ func (repo *Repository) UpdateUserProfile(ctx *fiber.Ctx) error {
 
 func (repo *Repository) UpdateOrganizerProfile(ctx *fiber.Ctx) error {
 	tokenString := ctx.Get("Authorization")
-	claims, err := middleware.DecodeToken(tokenString[7:])
+	claims, err := middleware.GetIdFromToken(tokenString)
 	if err != nil{
 		logger.DevLog("Unauthorized")
 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid request"})
@@ -927,15 +927,23 @@ func (repo *Repository) SubscribedEvents(ctx *fiber.Ctx) error {
 		logger.DevLog("operation failed")
 		return err
 	}
-	for _, event := range event_user {
-		_ = repo.DBConn.Where("id = ? AND organizer_id = ?",event.EventID, organizer_id).Find(&events)
-		_ = repo.DBConn.Where("id = ?", event.UserID).Find(&users)
+
+	for e, event := range event_user {
+		err = repo.DBConn.Where("id = ? AND organizer_id = ?",event.EventID, organizer_id).Find(&events)
+		if err != nil{
+			logger.DevLog("invalid")
+			return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid request"})
+		}
+		err = repo.DBConn.Where("id = ?", event.UserID).Find(&users)
+		if err != nil{
+			logger.DevLog("invalid")
+			return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"invalid request"})
+		}
+		logger.DevLog(*users[e].Email)
+		ctx.JSON(&fiber.Map{"booked events":users[e]})
 	}
-	for _, user := range users{
-		logger.DevLog(user)
-		return ctx.JSON(&fiber.Map{"users (attendees)":user.Email, "booked events":events})
-	}
-	return ctx.JSON(&fiber.Map{"booked events":events}) //"users (attendees)":user, 
+
+	return ctx.JSON(&fiber.Map{"booked events":events}) // "users (attendees)":users,
 }
 
 
