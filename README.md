@@ -50,27 +50,85 @@
 ### Usage
 * The eventSuite API offers the following endpoints:
 
-	api.Get("/events", repo.AllEvents)
-	api.Post("/login", repo.LoginHandler)
-	api.Post("/user/create", repo.CreateUser)
-	api.Get("/event/:event_id", repo.GetEvent)
-	api.Get("/search/event/:query", repo.SearchEvent)
-	api.Post("/organizer/create", repo.CreateOrganizer)
-	api.Get("/tickets/:event_id", repo.ListTicketsByEvents)
+	```python
+    api.Get("/events", AllEvents)
+    ```
 
-	api.Get("/user/me", repo.GetUser)
-	api.Post("/event/create", repo.CreateEvent)
-	api.Get("/organizer/registrations", repo.GetRegisteredEvents)
-	api.Get("/organizer/me", repo.GetOrganizer)
-	api.Get("/subevents", repo.SubscribedEvents)
-	api.Put("/user/update", repo.UpdateUserProfile)
-	api.Post("/ticket/create/:event_id", repo.CreateTicket)
-	api.Put("/update/event/:event_id", repo.UpdateEvent)
-	api.Post("/registration/user/:ticket_id", repo.AttendeeRegistration)
-	api.Put("/registration/confirm/:registration_id", repo.ConfirmRegistration)
-	api.Delete("/delete/event/:event_id", repo.DeleteEvent)
-	api.Put("/event/booking/:event_id", repo.BookEvent)
-	api.Put("/update/organizer/me", repo.UpdateOrganizerProfile)
+	```python
+    api.Post("/login", LoginHandler)
+    ```
+
+	```python
+    api.Post("/user/create", CreateUser)
+    ```
+
+	```python
+    api.Get("/event/:event_id", GetEvent)
+    ```
+
+	```python
+    api.Get("/search/event/:query", SearchEvent)
+    ```
+
+	```python
+    api.Post("/organizer/create", CreateOrganizer)
+    ```
+
+	```python
+    api.Get("/tickets/:event_id", ListTicketsByEvents)
+    ```
+
+	```python
+    api.Get("/user/me", GetUser)
+    ```
+
+	```python
+    api.Post("/event/create", CreateEvent)
+    ```
+
+	```python
+    api.Get("/organizer/registrations", GetRegisteredEvents)
+    ```
+
+	```python
+    api.Get("/organizer/me", GetOrganizer)
+    ```
+
+	```python
+    api.Get("/subevents", SubscribedEvents)
+    ```
+
+	```python
+    api.Put("/user/update", UpdateUserProfile)
+    ```
+
+	```python
+    api.Post("/ticket/create/:event_id", CreateTicket)
+    ```
+
+	```python
+    api.Put("/update/event/:event_id", UpdateEvent)
+    ```
+
+	```python
+    api.Post("/registration/user/:ticket_id", AttendeeRegistration)
+    ```
+
+	```python
+    api.Put("/registration/confirm/:registration_id", ConfirmRegistration)
+    ```
+
+	```python
+    api.Delete("/delete/event/:event_id", DeleteEvent)
+    ```
+
+	```python
+    api.Put("/event/booking/:event_id", BookEvent)
+    ```
+
+	```python
+    api.Put("/update/organizer/me", UpdateOrganizerProfile)
+    ```
 
 - You can use tools like Postman or curl to make requests and get responses from the API. Here is an example of how to create an event using curl:
 
@@ -97,7 +155,7 @@
 ###### Full text search
 - This query indicate that, use whatever the queryParam carries to search through the records and retrieve all the variables b/n SELECT and FROM
 ```go
-    err := repo.DBConn.SQL("SELECT id, title, description, location, start_date, end_date, organizer_id FROM event WHERE to_tsvector(coalesce(start_date, '') || title || ' ' || coalesce(description, '')) @@ websearch_to_tsquery(?)", queryParam).Find(&events)
+    err := DBConn.SQL("SELECT id, title, description, location, start_date, end_date, organizer_id FROM event WHERE to_tsvector(coalesce(start_date, '') || title || ' ' || coalesce(description, '')) @@ websearch_to_tsquery(?)", queryParam).Find(&events)
 ```
 
 <!-- JOIN query of 3 models -->
