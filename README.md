@@ -50,85 +50,85 @@
 ### Usage
 * The eventSuite API offers the following endpoints:
 
-	```python
+	`
     api.Get("/events", AllEvents)
-    ```
+    `
 
-	```python
+	`
     api.Post("/login", LoginHandler)
-    ```
+    `
 
-	```python
+	`
     api.Post("/user/create", CreateUser)
-    ```
+    `
 
-	```python
+	`
     api.Get("/event/:event_id", GetEvent)
-    ```
+    `
 
-	```python
+	`
     api.Get("/search/event/:query", SearchEvent)
-    ```
+    `
 
-	```python
+	`
     api.Post("/organizer/create", CreateOrganizer)
-    ```
+    `
 
-	```python
+	`
     api.Get("/tickets/:event_id", ListTicketsByEvents)
-    ```
+    `
 
-	```python
+	`
     api.Get("/user/me", GetUser)
-    ```
+    `
 
-	```python
+	`
     api.Post("/event/create", CreateEvent)
-    ```
+    `
 
-	```python
+	`
     api.Get("/organizer/registrations", GetRegisteredEvents)
-    ```
+    `
 
-	```python
+	`
     api.Get("/organizer/me", GetOrganizer)
-    ```
+    `
 
-	```python
+	`
     api.Get("/subevents", SubscribedEvents)
-    ```
+    `
 
-	```python
+	`
     api.Put("/user/update", UpdateUserProfile)
-    ```
+    `
 
-	```python
+	`
     api.Post("/ticket/create/:event_id", CreateTicket)
-    ```
+    `
 
-	```python
+	`
     api.Put("/update/event/:event_id", UpdateEvent)
-    ```
+    `
 
-	```python
+	`
     api.Post("/registration/user/:ticket_id", AttendeeRegistration)
-    ```
+    `
 
-	```python
+	`
     api.Put("/registration/confirm/:registration_id", ConfirmRegistration)
-    ```
+    `
 
-	```python
+	`
     api.Delete("/delete/event/:event_id", DeleteEvent)
-    ```
+    `
 
-	```python
+	`
     api.Put("/event/booking/:event_id", BookEvent)
-    ```
+    `
 
-	```python
+	`
     api.Put("/update/organizer/me", UpdateOrganizerProfile)
-    ```
+    `
 
 - You can use tools like Postman or curl to make requests and get responses from the API. Here is an example of how to create an event using curl:
 
