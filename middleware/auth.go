@@ -10,6 +10,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
+	logger "github.com/lowry/eventsuite/Logger"
+	models "github.com/lowry/eventsuite/Models"
+
 	// logger "github.com/lowry/eventsuite/Logger"
 	"golang.org/x/crypto/bcrypt"
 
@@ -43,7 +46,7 @@ func HashesMatch(hash, password string) error {
 	return err
 }
 
-// generate jwt token with username and email
+// generate jwt token
 func GenerateToken(email, role string, userId uint32) (string, error) {
     claims := JWTClaims{
       UserID: userId,
@@ -153,4 +156,54 @@ var (
 // }
 
 
+type Student struct{
+  Name string
+  Class int
+}
+
+type Teacher struct{
+  Student []Student
+}
+
+func SomeShii(){
+  student := Student{
+    Name: "Eugene",
+    Class: 5,
+  }
+  teacher := Teacher{
+    Student: []Student{
+      student,
+    },
+  }
+  fmt.Println(teacher)
+  // tea := make(map[string]string)
+  // tea := make(map[Student]string)
+  // tea[student] = "Eugene"
+  // logger.DevLog(tea)
+  // delete(tea, student)
+  for _, tea := range teacher.Student{
+    logger.DevLog(tea.Class)
+    slice:= make([]string, 0)
+    slice = append(slice, tea.Name)
+    logger.DevLog(slice)
+  }
+  // logger.DevLog(tea)
+}
+
+func EventsAttending(Events []*models.Event, event uint32, another_id uint32) ([]*models.Event, error) {
+  if event <= 0{
+    return nil, errors.New("event missing")
+  }
+  keys:= Events
+  eventMap := make(map[uint32]models.Event)
+  eventMap[event] = *Events[0]
+  logger.DevLog(eventMap)
+  delete(eventMap, event)
+  logger.DevLog(eventMap)
+  for _, use := range eventMap{
+    keys = append(keys, &use)
+  }
+  logger.DevLog(keys)
+  return Events, nil
+}
 

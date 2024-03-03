@@ -52,7 +52,7 @@ type  RegularUser struct {				//User Object
 	Fullname 			*string    	`json:"fullname"`
 	Organization  		*string    	`json:"organization"`
 	Role				string		`json:"role" validate:"required eq=user" default:"user"`
-	EventsAttending  	[]*Event    `xorm:"'events_attending' many2many:event_user" json:"events_attending"`	//events a user has registered to attend
+	EventsAttending  	[]*Event    `json:"events_attending"`	//events a user has registered to attend
 	Token				string		`json:"token"`
 	Refresh_Token		string		`json:"refresh_token"`
 	CreatedAt 			time.Time 	`json:"created_at"`
@@ -66,13 +66,13 @@ type  EventUser struct {			// Junction table for querying many-to-many relations
 }
 
 type  Organizer struct {			// Events Manager
-	ID        		uint32    			`xorm:"'id' pk"`
+	ID        		uint32    		`xorm:"'id' pk"`
 	Name     		*string    		`json:"name"`
 	Description 	*string    		`json:"description"`
-	Email 	*string    		`xorm:"unique" json:"email"`
-	Phone 	*string    		`xorm:"unique" json:"phone"`
+	Email 			*string    		`xorm:"unique" json:"email"`
+	Phone 			*string    		`xorm:"unique" json:"phone"`
 	Password 		*string    		`json:"password"`
-	Role			string		`json:"role" validate:"required eq=organizer"`
+	Role			string			`json:"role" validate:"required eq=organizer"`
 	EventsManaged  	[]*Event    	`xorm:"unique" json:"events_managed"`      //:"unique" 
 	CreatedAt 		time.Time 		`json:"created_at"`
 	UpdatedAt 		time.Time 		`json:"updated_at"`
@@ -91,8 +91,8 @@ const (
 
 type  Ticket struct {
 	ID        			uint32     		`xorm:"'id' pk autoincr"`
-	Organizer_id		uint32				`json:"organizer_id"`
-	Event_id 			uint32       		`json:"event_id"`
+	Organizer_id		uint32			`json:"organizer_id"`
+	Event_id 			uint32       	`json:"event_id"`
 	Type     			TicketType    	`json:"type"`
 	Price    			float64   		`json:"price"`
 	QuantityAvailable 	int    			`json:"quantity_available"` // Total tickets available
@@ -116,6 +116,7 @@ const (
 type Registration struct {
 	ID        			uint32     		`xorm:"'id' pk autoincr"`
 	User_id 			uint32       		`json:"user_id"`
+	Event_id 			uint32       		`json:"event_id"`
 	Ticket_id 			uint32       		`json:"ticket_id"`
 	Quantity 			int       		`json:"quantity"` 	// Number of Tickets registered
 	RegistrationDate 	time.Time 		`json:"registration_date"`

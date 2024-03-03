@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 
-	"log"
 	// "math/big"
 
 	logger "github.com/lowry/eventsuite/Logger"
@@ -40,8 +39,8 @@ func TicketAvailable(ticketType string, quantity, total_available int) (int, err
   var err error
   if quantity > total_available{
     logger.DevLog("ticket exhausted")
-    log.Panic("ticket out of stock")
-    return 0, nil
+    // log.Panic("ticket out of stock")
+    return 0, err
   }
   switch ticketType{
   case "Student":

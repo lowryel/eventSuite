@@ -1,5 +1,99 @@
-## Event Management System
-------------------------------------------
+## Event Management System - eventSuite
+
+- eventSuite is an event management API built with Golang, Postgres, XORM, and Fiber framework. It allows users to create, manage, and attend events of various types and categories. It also supports ticketing, registration, and payment features.
+
+### Motivation
+- I created this project as a way to learn and practice Golang and web development. I wanted to build a full-featured and scalable API that can handle complex business logic and data models. I also wanted to explore different technologies and frameworks that can help me achieve my goals.
+
+### Features
+- CRUD operations for events, users, organizers, tickets, and registrations
+- Authentication and authorization using JWT and middleware
+- Validation and error handling using custom structs and methods
+- Database connection and ORM using XORM and Postgres
+- Routing and web framework using Fiber
+
+### Installation
+- To install and run this project, you need to have the following tools and dependencies:
+
+- Golang
+- Postgres
+- XORM
+- Fiber
+- Other packages listed in go.mod file
+
+- You can clone this repository using the following command:
+- `git clone https://github.com/lowryel/eventSuite.git`
+
+- Then, you need to create a database and a user in Postgres and grant the user all privileges on the database. You can use the following commands as an example:
+
+  `CREATE DATABASE eventsuite;
+    CREATE USER eventsuite WITH PASSWORD 'eventsuite';
+    GRANT ALL PRIVILEGES ON DATABASE eventsuite TO eventsuite;`
+
+- Next, you need to create a .env file in the root directory of the project and add the following environment variables:
+  
+  `DB_HOST=localhost
+    DB_PORT=5432
+    DB_USER=eventsuite
+    DB_PASSWORD=eventsuite
+    DB_NAME=eventsuite
+    JWT_SECRET=eventsuite`
+
+- You can change the values of these variables according to your configuration.
+
+- Finally, you can run the project using the following command:
+
+`go run main.go`
+
+- This will start the server on port 3000. You can access the API using http://localhost:5500.
+
+### Usage
+* The eventSuite API offers the following endpoints:
+
+	api.Get("/events", repo.AllEvents)
+	api.Post("/login", repo.LoginHandler)
+	api.Post("/user/create", repo.CreateUser)
+	api.Get("/event/:event_id", repo.GetEvent)
+	api.Get("/search/event/:query", repo.SearchEvent)
+	api.Post("/organizer/create", repo.CreateOrganizer)
+	api.Get("/tickets/:event_id", repo.ListTicketsByEvents)
+
+	api.Get("/user/me", repo.GetUser)
+	api.Post("/event/create", repo.CreateEvent)
+	api.Get("/organizer/registrations", repo.GetRegisteredEvents)
+	api.Get("/organizer/me", repo.GetOrganizer)
+	api.Get("/subevents", repo.SubscribedEvents)
+	api.Put("/user/update", repo.UpdateUserProfile)
+	api.Post("/ticket/create/:event_id", repo.CreateTicket)
+	api.Put("/update/event/:event_id", repo.UpdateEvent)
+	api.Post("/registration/user/:ticket_id", repo.AttendeeRegistration)
+	api.Put("/registration/confirm/:registration_id", repo.ConfirmRegistration)
+	api.Delete("/delete/event/:event_id", repo.DeleteEvent)
+	api.Put("/event/booking/:event_id", repo.BookEvent)
+	api.Put("/update/organizer/me", repo.UpdateOrganizerProfile)
+
+- You can use tools like Postman or curl to make requests and get responses from the API. Here is an example of how to create an event using curl:
+
+```JSON
+    curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer <token>" -d '{"title":"Golang Meetup","description":"A meetup for Golang enthusiasts","start_date":"2024-03-10T18:00:00Z","end_date":"2024-03-10T20:00:00Z","location":"Accra, Ghana","organizer_id":1}' http://localhost:5500/api/event/create
+```
+- This will return a response like this:
+  ```JSON
+    {
+        "id": 1,
+        "title": "Golang Meetup",
+        "description": "A meetup for Golang enthusiasts",
+        "start_date": "2024-03-10T18:00:00Z",
+        "end_date": "2024-03-10T20:00:00Z",
+        "location": "Accra, Ghana",
+        "organizer_id": 1,
+        "attendees": []
+    }
+
+  ```
+
+# DEVELOPER SECTION
+-----------------------------------------
 ###### Full text search
 - This query indicate that, use whatever the queryParam carries to search through the records and retrieve all the variables b/n SELECT and FROM
 ```go
