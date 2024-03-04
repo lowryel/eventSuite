@@ -170,22 +170,25 @@ func SomeShii(){
     Name: "Eugene",
     Class: 5,
   }
+  student1 := Student{
+    Name: "Lowry",
+    Class: 8,
+  }
+  student2 := Student{
+    Name: "Agbaglo",
+    Class: 10,
+  }
   teacher := Teacher{
     Student: []Student{
-      student,
+      student, student1, student2,
     },
   }
-  fmt.Println(teacher)
-  // tea := make(map[string]string)
-  // tea := make(map[Student]string)
-  // tea[student] = "Eugene"
-  // logger.DevLog(tea)
-  // delete(tea, student)
-  for _, tea := range teacher.Student{
-    logger.DevLog(tea.Class)
-    slice:= make([]string, 0)
-    slice = append(slice, tea.Name)
-    logger.DevLog(slice)
+  userMap := make(map[int]Student)
+  userMap[student.Class] = student
+  delete(userMap, 5)
+  logger.DevLog(teacher.Student)
+  for _, user := range teacher.Student{
+    logger.DevLog(user.Name)
   }
   // logger.DevLog(tea)
 }

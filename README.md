@@ -150,6 +150,23 @@
 
   ```
 
+##### Some Issues Encountered on the way
+- Creating a third table known as Junction Table to associate two related tables. 
+    I was initially relying on my knowledge from Python-Django deevelopment but then
+    discovered you need a third table to store the association. That's where the junction table came in.
+
+- As this is my first major project in Golang, setting up authentication was a bit tricky.
+  Even using it to protect the routes was a bit daunting but I figured the best way to learn is to practice.
+  I also got help from some online resources and GhatGPT free tier.
+
+- Creating two set of users. While building, I realized I have to create two set of users (Organizer and Regular users).
+    So I needed to implement role based access to give certain level of permission. That lead me to (organizer and user) roles
+
+- Another shortfall I faced is clearing an event after is was registered. My initial thought was to delete the 
+  event from the user event list after the event is registered but that was impossible to handle. Then I remembered
+  I have user and event association in a table (event_user). This table stores user_id with the event booked event_id.
+  So I just clear the association from that table and handled the edge cases such as registering same event more than once.
+
 # DEVELOPER SECTION
 -----------------------------------------
 ###### Full text search
