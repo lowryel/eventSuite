@@ -666,6 +666,8 @@ func (repo *Repository) GetEvent(ctx *fiber.Ctx) error {
 		session.Rollback()
 		return err
 	}
+
+	go middleware.Send_mail()
 	// Commit transaction
 	err = session.Commit()
 	if err != nil {
@@ -912,56 +914,90 @@ func (repo *Repository) DeleteEvent(ctx *fiber.Ctx) error {
 
 
 // func (repo *Repository) DeleteUserEvent(ctx *fiber.Ctx) error {
-// 	tokenString := ctx.Get("Authorization")
-// 	claims, err := middleware.GetIdFromToken(tokenString)
-// 	if err != nil{
-// 		logger.DevLog("error getting token")
-// 		return err
-// 	}
-// 	event_id := ctx.Params("event_id")
-// 	if claims.Role != "user"{
-// 		logger.DevLog("Unauthorized access")
-// 		return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{"error":"unauthorized access"})
-// 	}
+//     tokenString := ctx.Get("Authorization")
+//     claims, err := middleware.GetIdFromToken(tokenString)
+//     if err != nil {
+//         logger.DevLog("error getting token")
+//         return err
+//     }
 
-// 	event := models.Event{} // event model
-// 	user := models.RegularUser{} // event model
-// 	// begin transaction
-// 	session := repo.DBConn.NewSession()
-// 	defer session.Close()
-// 	err = session.Begin() // Begin DB session
-// 	if err != nil{
-// 		logger.DevLog("server error")
-// 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"server error"})
-// 	}
-// 	// get event by ID and delete
-// 	_, err = repo.DBConn.ID(event_id).Get(&event)
-// 	if err != nil{
-// 		logger.DevLog("event unavailable")
-// 		session.Rollback()
-// 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"error deleting event"})
-// 	}
+//     eventID := ctx.Params("event_id")
 
-// 	_, err = repo.DBConn.ID(claims.UserID).Get(&user)
-// 	if err != nil{
-// 		logger.DevLog("event unavailable")
-// 		session.Rollback()
-// 		return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error":"error deleting event"})
-// 	}
-// 	userMap := make(map[uint32]models.Event)
-// 	userMap[event.ID] = event
-// 	logger.DevLog(userMap)
-// 	delete(userMap, event.ID)
-// 	logger.DevLog(userMap)
+//     if claims.Role != "user" {
+//         logger.DevLog("Unauthorized access")
+//         return ctx.Status(http.StatusUnauthorized).JSON(&fiber.Map{"error": "unauthorized access"})
+//     }
 
-// 	// commiting event to db
-// 	err = session.Commit()
-// 	if err != nil{
-// 		logger.DevLog("error commiting to DB")
-// 		return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error":"error commiting to DB"})
-// 	}
+//     event := models.Event{}
+//     user := models.RegularUser{}
 
-// 	return ctx.Status(http.StatusOK).JSON(&fiber.Map{"msg":"event delete success"})
+//     // begin transaction
+//     session := repo.DBConn.NewSession()
+//     defer session.Close()
+//     err = session.Begin()
+//     if err != nil {
+//         logger.DevLog("server error")
+//         return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "server error"})
+//     }
+
+//     // get event by ID
+//     _, err = repo.DBConn.ID(eventID).Get(&event)
+//     if err != nil {
+//         logger.DevLog("event unavailable")
+//         session.Rollback()
+//         return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "error deleting event"})
+//     }
+
+//     // get user by ID
+//     _, err = repo.DBConn.ID(claims.UserID).Get(&user)
+//     if err != nil {
+//         logger.DevLog("user unavailable")
+//         session.Rollback()
+//         return ctx.Status(http.StatusBadRequest).JSON(&fiber.Map{"error": "error deleting event"})
+//     }
+
+//     // remove event from user's EventsAttending slice
+//     userEvents, err := middleware.RemoveObjectFromSliceByIndex(user.EventsAttending, findEventIndexInSlice(user.EventsAttending, event.ID))
+//     if err != nil {
+//         logger.DevLog("error removing event from user's EventsAttending slice")
+//         session.Rollback()
+//         return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "error deleting event"})
+//     }
+//     user.EventsAttending = userEvents
+
+//     // update user in the database
+//     _, err = repo.DBConn.ID(claims.UserID).Update(&user)
+//     if err != nil {
+//         logger.DevLog("error updating user in database")
+//         session.Rollback()
+//         return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "error deleting event"})
+//     }
+
+//     // delete event from the database
+//     _, err = repo.DBConn.ID(eventID).Delete(&event)
+//     if err != nil {
+//         logger.DevLog("error deleting event from database")
+//         session.Rollback()
+//         return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "error deleting event"})
+//     }
+
+//     err = session.Commit()
+//     if err != nil {
+//         logger.DevLog("error committing to DB")
+//         return ctx.Status(http.StatusInternalServerError).JSON(&fiber.Map{"error": "error committing to DB"})
+//     }
+
+//     return ctx.Status(http.StatusOK).JSON(&fiber.Map{"msg": "event delete success"})
+// }
+
+// // Helper function to find the index of an event in a slice of event IDs
+// func findEventIndexInSlice(eventIDs []string, eventID string) int {
+//     for i, id := range eventIDs {
+//         if id == eventID {
+//             return i
+//         }
+//     }
+//     return -1
 // }
 
 

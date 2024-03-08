@@ -210,3 +210,11 @@ func EventsAttending(Events []*models.Event, event uint32, another_id uint32) ([
   return Events, nil
 }
 
+
+// func RemoveObjectFromSliceByIndex(slice models.Event, index int) (models.Event, error) {
+//   if index == len(slice) || index < 0 {
+//     return nil, errors.New("index out of bounds")
+//   }
+//   return append(slice[:index], slice[index+1:]...), nil
+// }
+
