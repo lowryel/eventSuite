@@ -1,4 +1,5 @@
 {
-    "editor.fontFamily": "'Fira Code', 'monospace', monospace",
-    "workbench.layoutControl.type": "toggles"
+    "editor.fontFamily": "'URW Gothic', 'monospace', monospace",
+    "workbench.layoutControl.type": "toggles",
+    "editor.fontWeight": "500"
 }

@@ -6,6 +6,7 @@ require (
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -17,7 +18,6 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/goccy/go-json v0.8.1 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

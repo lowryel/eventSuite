@@ -6,10 +6,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
+
+	// "github.com/google/uuid"
 	logger "github.com/lowry/eventsuite/Logger"
 	models "github.com/lowry/eventsuite/Models"
 
@@ -23,7 +26,7 @@ import (
 
 // JWTClaims struct represents the claims for JWT
 type JWTClaims struct {
-  UserID      uint32       `json:"id"`
+  UserID      string      `json:"id"`
   Email       string    `json:"email"`
   Username    string 		`json:"username"`
   Role        string    `json:"role"`
@@ -47,7 +50,7 @@ func HashesMatch(hash, password string) error {
 }
 
 // generate jwt token
-func GenerateToken(email, role string, userId uint32) (string, error) {
+func GenerateToken(email, role string, userId string) (string, error) {
     claims := JWTClaims{
       UserID: userId,
       Email: email,
@@ -84,7 +87,8 @@ func DecodeToken(tokenString string) (*JWTClaims, error) {
 }
 
 func GetIdFromToken(tokenString string) (*JWTClaims, error){
-  claims, err := DecodeToken(tokenString[7:])
+  tokenStr := strings.Split(tokenString, " ")[1]
+  claims, err := DecodeToken(tokenStr)
   if err != nil{
     log.Println(err)
   }
@@ -193,12 +197,12 @@ func SomeShii(){
   // logger.DevLog(tea)
 }
 
-func EventsAttending(Events []*models.Event, event uint32, another_id uint32) ([]*models.Event, error) {
+func EventsAttending(Events []*models.Event, event int, another_id int) ([]*models.Event, error) {
   if event <= 0{
     return nil, errors.New("event missing")
   }
   keys:= Events
-  eventMap := make(map[uint32]models.Event)
+  eventMap := make(map[int]models.Event)
   eventMap[event] = *Events[0]
   logger.DevLog(eventMap)
   delete(eventMap, event)

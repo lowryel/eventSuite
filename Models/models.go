@@ -1,8 +1,9 @@
 package models
 
 import (
-	"time"
 	"fmt"
+	"os"
+	"time"
 
 
 	// "github.com/google/uuid"
@@ -14,13 +15,13 @@ import (
 
 //  Models
 type  Event struct {
-	ID        		uint32     	`xorm:"'id' unique pk autoincr"`
+	ID        		string     	`xorm:"'id' pk" json:"id"`
 	Title     		*string    	`json:"title"`
 	Description 	*string    	`json:"description"`
 	StartDate 		string 	`json:"start_date"`
 	EndDate   		string 	`json:"end_date"`
 	Location  		*string    	`json:"location"`
-	Organizer_id 	uint32       	`json:"organizer_id"`
+	Organizer_id 	string       	`json:"organizer_id"`
 	// Attendees	[]RegularUser		`xorm:"'attendees' many2many:event_user;"`
 	CreatedAt time.Time 		`json:"created_at"`
 	UpdatedAt time.Time 		`json:"updated_at"`
@@ -45,14 +46,14 @@ type Login struct{
 }
 
 type  RegularUser struct {				//User Object
-	ID        			uint32     	`xorm:"'id' pk autoincr"`
+	UserID        			string     	`json:"id"`
 	Username     		*string    	`json:"username"`
 	Email 				*string    	`xorm:"unique" json:"email"`
 	Password 			*string    	`json:"password"`
 	Fullname 			*string    	`json:"fullname"`
 	Organization  		*string    	`json:"organization"`
 	Role				string		`json:"role" validate:"required eq=user" default:"user"`
-	EventsAttending  	[]*Event    `json:"events_attending"`	//events a user has registered to attend
+	EventsAttending  	[]*Event    `json:"events_attending CASCADE"`	//events a user has registered to attend
 	Token				string		`json:"token"`
 	Refresh_Token		string		`json:"refresh_token"`
 	CreatedAt 			time.Time 	`json:"created_at"`
@@ -60,20 +61,20 @@ type  RegularUser struct {				//User Object
 }
 
 type  EventUser struct {			// Junction table for querying many-to-many relationships
-    ID     	int 	`xorm:"'id' pk autoincr"`
-	EventID	uint32		`xorm:"'event_id' pk"`
-	UserID	uint32		`xorm:"'user_id' pk"`
+    ID     	int 	`json:"id"`
+	EventID	string		`json:"event_id"`
+	UserID	string		`json:"user_id"`
 }
 
 type  Organizer struct {			// Events Manager
-	ID        		uint32    		`xorm:"'id' pk"`
+	OrganizerID        		string   		`json:"organizer_id"`
 	Name     		*string    		`json:"name"`
 	Description 	*string    		`json:"description"`
 	Email 			*string    		`xorm:"unique" json:"email"`
 	Phone 			*string    		`xorm:"unique" json:"phone"`
 	Password 		*string    		`json:"password"`
 	Role			string			`json:"role" validate:"required eq=organizer"`
-	EventsManaged  	[]*Event    	`xorm:"unique" json:"events_managed"`      //:"unique" 
+	EventsManaged  	[]*Event    	`json:"events_managed"`      //:"unique" 
 	CreatedAt 		time.Time 		`json:"created_at"`
 	UpdatedAt 		time.Time 		`json:"updated_at"`
 }
@@ -90,9 +91,9 @@ const (
 )
 
 type  Ticket struct {
-	ID        			uint32     		`xorm:"'id' pk autoincr"`
-	Organizer_id		uint32			`json:"organizer_id"`
-	Event_id 			uint32       	`json:"event_id"`
+	ID        			string     		`xorm:"'id' pk"`
+	Organizer_id		string			`json:"organizer_id"`
+	Event_id 			string       	`json:"event_id"`
 	Type     			TicketType    	`json:"type"`
 	Price    			float64   		`json:"price"`
 	QuantityAvailable 	int    			`json:"quantity_available"` // Total tickets available
@@ -114,10 +115,10 @@ const (
 
 // Registration for the Events
 type Registration struct {
-	ID        			uint32     		`xorm:"'id' pk autoincr"`
-	User_id 			uint32       		`json:"user_id"`
-	Event_id 			uint32       		`json:"event_id"`
-	Ticket_id 			uint32       		`json:"ticket_id"`
+	ID        			string     		`xorm:"'id' pk"`
+	User_id 			string       		`json:"user_id"`
+	Event_id 			string       		`json:"event_id"`
+	Ticket_id 			string       		`json:"ticket_id"`
 	Quantity 			int       		`json:"quantity"` 	// Number of Tickets registered
 	RegistrationDate 	time.Time 		`json:"registration_date"`
 	Status 				StatusChoice   `json:"status"`
@@ -141,7 +142,7 @@ func DBConnection() (*xorm.Engine, error) {
 	// ty := Ticket{}
 	// ty.Type = GeneralAdmission
 	dsn := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s  dbname=%s sslmode=disable", "localhost", 5432, "eugene", "cartelo009", "eventsdb")
+		"host=%s port=%d user=%s password=%s  dbname=%s sslmode=disable", "localhost", 5432, "eugene", os.Getenv("PASSWORD"), "eventsdb")
 	engine, err := xorm.NewEngine("postgres", dsn)
 	if err != nil{
 		return nil, err
@@ -150,13 +151,10 @@ func DBConnection() (*xorm.Engine, error) {
 		return nil, err
 	}
 	if err := engine.Sync(
-			new(Event), new(RegularUser), new(Organizer), new(Ticket), 
+			new(Event), new(Organizer), new(Ticket), new(RegularUser),
 			new(Registration),  new(EventUser), new(Login), new(LoginData),
 			new(ArchiveEvent),
 		); err != nil{
-		return nil, err
-	}
-	if err != nil{
 		return nil, err
 	}
 	return engine, err

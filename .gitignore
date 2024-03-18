@@ -1,3 +1,4 @@
 .env
-go.mod
+.vscode/
 go.sum
+repo.go

@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"crypto/rand"
-	"encoding/binary"
+	// "crypto/rand"
+	// "encoding/binary"
 	"errors"
 
 	// "math/big"
@@ -56,10 +56,10 @@ func TicketAvailable(ticketType string, quantity, total_available int) (int, err
   return total_available, err
 }
 
-func RandomIDGen(id uint32) uint32 {
-  binary.Read(rand.Reader, binary.LittleEndian, &id)
+// func RandomIDGen(id int) int {
+//   binary.Read(rand.Reader, binary.LittleEndian, &id)
 
-  logger.DevLog(id)
-  return id
-}
+//   logger.DevLog(id)
+//   return id
+// }
 
