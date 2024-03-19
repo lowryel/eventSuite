@@ -27,7 +27,8 @@ jobs:
             echo 'DB_URI='${DB_URI} > .env \
             && echo 'SECRET_KEY='${SECRET_KEY} >> .env \
             && echo 'STRIPE_SECRET_KEY='${STRIPE_SECRET_KEY} >> .env \
-            && echo 'STRIPE_PUBLISHABLE_KEY='${STRIPE_PUBLISHABLE_KEY} >> .env
+            && echo 'STRIPE_PUBLISHABLE_KEY='${STRIPE_PUBLISHABLE_KEY} >> .env && \
+            cat .env
 
       - run:
           name: Run
