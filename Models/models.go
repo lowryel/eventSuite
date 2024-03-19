@@ -142,7 +142,7 @@ type EventAttendee struct{// EventAttendee is someone who made a booking. This w
 func DBConnection() (*xorm.Engine, error) {
 	// ty := Ticket{}
 	// ty.Type = GeneralAdmission
-	dsn := os.Getenv("DB_URL")
+	dsn := os.Getenv("DB_URI")
 		
 		// dsn := fmt.Sprintf(
 		// "host=%s port=%d user=%s password=%s  dbname=%s sslmode=disable", "localhost", 5432, "eugene", os.Getenv("PASSWORD"), "eventsdb")

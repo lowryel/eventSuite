@@ -16,6 +16,9 @@ jobs:
           paths:
             - /go/pkg/mod
       - run:
+          name: tidy go modules
+          command: go mod tidy
+      - run:
           name: Build
           command: go build -o main
       - run:
