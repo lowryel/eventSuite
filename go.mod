@@ -10,6 +10,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/stripe/stripe-go/v76 v76.21.0
 	golang.org/x/crypto v0.14.0
 	xorm.io/xorm v1.3.8
 )

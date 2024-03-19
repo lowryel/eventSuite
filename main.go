@@ -187,11 +187,13 @@ func (repo *Repository) CreateUser(ctx *fiber.Ctx) error {
 		session.Rollback()
 		return err
 	}
+	customer := middleware.CreateCustomer(*user.Email, *user.Fullname)
 	loginData := models.LoginData{
 		Email: *user.Email,
 		Username: *user.Username,
 		Password: *user.Password,
 		Role: user.Role,
+		Customer: customer.ID,
 	}
 	// inser data into login data table
 	_, err = repo.DBConn.Insert(loginData)
@@ -347,12 +349,14 @@ func (repo *Repository) CreateOrganizer(ctx *fiber.Ctx) error {
 		logger.DevLog(err)
 		return err
 	}
+	customer := middleware.CreateCustomer(*organizer.Email, *organizer.Name)
 	logger.DevLog(*organizer)
 	loginData := models.LoginData{
 		Email: *organizer.Email,
 		Phone: *organizer.Phone,
 		Password: *organizer.Password,
 		Role:	organizer.Role,
+		Customer: customer.ID,
 	}
 	// inser data into login data table
 	_, err = repo.DBConn.Insert(&loginData)
@@ -1229,6 +1233,7 @@ func (repo *Repository) AttendeeRegistration(ctx *fiber.Ctx) error {// register 
 	}
 	cost_incurred := float64(register.Quantity) * ticket.Price
 	logger.DevLog(cost_incurred)
+	middleware.HandleCreatePaymentIntent(int64(cost_incurred), ctx)
 
 	//  delete event association after registration
 	_, err = repo.DBConn.Where("user_i_d = ? AND event_i_d = ?", claims.UserID, evnt.ID).Delete(&eventUser)

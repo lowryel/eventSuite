@@ -21,7 +21,7 @@ func Send_mail() {
 
 	m.Attach("lolcat.jpg")
 
-	d := mail.NewDialer("smtp.gmail.com", 587, "eugeneagbaglo@gmail.com", "cartelo009")
+	d := mail.NewDialer("smtp.gmail.com", 587, "eugeneagbaglo@gmail.com", "")
 
 	// Send the email to Kate, Noah and Oliver.
 	if err := d.DialAndSend(m); err != nil {

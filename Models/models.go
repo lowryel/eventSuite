@@ -38,6 +38,7 @@ type LoginData struct{
 	Password string
 	Phone	string
 	Role	string
+	Customer string
 }
 
 type Login struct{
