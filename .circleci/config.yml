@@ -1,18 +1,9 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# For a detailed guide to building and testing with Go, read the docs:
 version: 2.1
-
-# Define a job to be invoked later in a workflow.
 jobs:
   build:
-    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
     docker:
-      # Specify the version you desire here
       - image: cimg/go:1.21
-
-    # Add steps to the job
     steps:
-      # Checkout the code as the first step.
       - checkout
       - restore_cache:
           keys:
@@ -23,22 +14,14 @@ jobs:
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
-            - "/go/pkg/mod"
-      # - run:
-      #     name: Run tests
-      #     command: |
-      #       mkdir -p /tmp/test-reports
-      #       gotestsum --junitfile /tmp/test-reports/unit-tests.xml
-      # - store_test_results:
-      #     path: /tmp/test-reports
-
-      - run: 
+            - /go/pkg/mod
+      - run:
           name: Build
           command: go build -o main
-
-# Orchestrate jobs using workflows
+      - run:
+          name: Run
+          command: ./main
 workflows:
-  sample: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+  sample:
     jobs:
       - build
