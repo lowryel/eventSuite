@@ -1,5 +1,10 @@
 {
     "editor.fontFamily": "'URW Gothic', 'monospace', monospace",
     "workbench.layoutControl.type": "toggles",
-    "editor.fontWeight": "500"
+    "editor.fontWeight": "500",
+    "circleci.filters.branchFilter": "default",
+    "circleci.persistedProjectSelection": [
+        "gh/lowryel/eventSuite"
+    ],
+    "circleci.filters.myPipelinesOnly": true
 }
