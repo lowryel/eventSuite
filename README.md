@@ -50,25 +50,24 @@
 ### Usage
 * The eventSuite API offers the following endpoints:
 
-`
-	Post        api/login
+`   Post        api/login
 	Get     api/search/event/:query
-	Get     api/tickets/:event_id
+	Get     api/tickets/:event_id`
 
-    // User route
+ `   // User route
     Post       /user/create
     user.Use(middleware.JWTMiddleware())
     Get        /user/me
-    Put        /user/update
+    Put        /user/update`
     
-    // Organizer routes
+ `   // Organizer routes
     Post      /organizer/create
     organizer.Use(middleware.JWTMiddleware())
     Get       /organizer/me
     Get       /organizer/registrations
-    Put       /organizer/update
+    Put       /organizer/update`
     
-    // Event routes
+ `   // Event routes
     Get                 /event/:event_id
     Get                 /event/events
     event.Use(middleware.JWTMiddleware())
@@ -76,9 +75,9 @@
     Get                 /event/subevents
     Put                 /event/update/:event_id
     Delete            /event/delete/:event_id
-    Put                 /event/book/:event_id
+    Put                 /event/book/:event_id`
 
-    // Registration routes
+ `   // Registration routes
     registration.Use(middleware.JWTMiddleware())
     Put    /register/confirm/:registration_id
     Post   /register/ticket/create/:event_id
