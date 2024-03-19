@@ -187,7 +187,9 @@ func (repo *Repository) CreateUser(ctx *fiber.Ctx) error {
 		session.Rollback()
 		return err
 	}
+	// Create stripe customer with user details
 	customer := middleware.CreateCustomer(*user.Email, *user.Fullname)
+	// assign values to login data variables
 	loginData := models.LoginData{
 		Email: *user.Email,
 		Username: *user.Username,
@@ -1404,29 +1406,43 @@ func (repo *Repository) Routes(app *fiber.App) {
 		return nil
 	})
 
-	api.Get("/events", repo.AllEvents)
 	api.Post("/login", repo.LoginHandler)
-	api.Post("/user/create", repo.CreateUser)
-	api.Get("/event/:event_id", repo.GetEvent)
 	api.Get("/search/event/:query", repo.SearchEvent)
-	api.Post("/organizer/create", repo.CreateOrganizer)
 	api.Get("/tickets/:event_id", repo.ListTicketsByEvents)
 	
-	app.Use(middleware.JWTMiddleware())
-	api.Get("/user/me", repo.GetUser)
+	// User route
+	user:= app.Group("user")
+	user.Post("/create", repo.CreateUser)
+	user.Use(middleware.JWTMiddleware())
+	user.Get("/me", repo.GetUser)
+	user.Put("/update", repo.UpdateUserProfile)
+	
+	// Organizer routes
+	organizer := app.Group("organizer")
+	organizer.Post("/create", repo.CreateOrganizer)
+	organizer.Use(middleware.JWTMiddleware())
+	organizer.Get("/me", repo.GetOrganizer)
+	organizer.Get("/registrations", repo.GetRegisteredEvents)
+	organizer.Put("/update", repo.UpdateOrganizerProfile)
+	
+	// Event routes
+	event:=app.Group("event")
+	event.Get("/:event_id", repo.GetEvent)
+	event.Get("/events", repo.AllEvents)
+	event.Use(middleware.JWTMiddleware())
+	event.Post("/create", repo.CreateEvent)
+	event.Get("/subevents", repo.SubscribedEvents)
+	event.Put("/update/:event_id", repo.UpdateEvent)
+	event.Delete("/delete/:event_id", repo.DeleteEvent)
+	event.Put("/book/:event_id", repo.BookEvent)
+
+	// Registration routes
+	registration:=app.Group("register")
+	registration.Use(middleware.JWTMiddleware())
+	registration.Put("/confirm/:registration_id", repo.ConfirmRegistration)
+	registration.Post("/ticket/create/:event_id", repo.CreateTicket)
+	registration.Post("/event/ticket/:ticket_id", repo.AttendeeRegistration)
 	// api.Delete("/user/event/delete/:event_id", repo.DeleteUserEvent)
-	api.Post("/event/create", repo.CreateEvent)
-	api.Get("/organizer/registrations", repo.GetRegisteredEvents)
-	api.Get("/organizer/me", repo.GetOrganizer)
-	api.Get("/subevents", repo.SubscribedEvents)
-	api.Put("/user/update", repo.UpdateUserProfile)
-	api.Post("/ticket/create/:event_id", repo.CreateTicket)
-	api.Put("/update/event/:event_id", repo.UpdateEvent)
-	api.Post("/registration/user/:ticket_id", repo.AttendeeRegistration)
-	api.Put("/registration/confirm/:registration_id", repo.ConfirmRegistration)
-	api.Delete("/delete/event/:event_id", repo.DeleteEvent)
-	api.Put("/event/booking/:event_id", repo.BookEvent)
-	api.Put("/update/organizer/me", repo.UpdateOrganizerProfile)
 }
 
 

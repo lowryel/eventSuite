@@ -22,6 +22,14 @@ jobs:
           name: Build
           command: go build -o main
       - run:
+          name: Retrieve env variables into .env
+          command: | 
+            echo 'DB_URI='${DB_URI} > .env \
+            && echo 'SECRET_KEY='${SECRET_KEY} >> .env \
+            && echo 'STRIPE_SECRET_KEY='${STRIPE_SECRET_KEY} >> .env \
+            && echo 'STRIPE_PUBLISHABLE_KEY='${STRIPE_PUBLISHABLE_KEY} >> .env
+
+      - run:
           name: Run
           command: ./main
 

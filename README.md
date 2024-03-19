@@ -50,85 +50,40 @@
 ### Usage
 * The eventSuite API offers the following endpoints:
 
-	`
-    api.Get("/events", AllEvents)
-    `
+`
+	Post        api/login
+	Get     api/search/event/:query
+	Get     api/tickets/:event_id
 
-	`
-    api.Post("/login", LoginHandler)
-    `
+    // User route
+    Post       /user/create
+    user.Use(middleware.JWTMiddleware())
+    Get        /user/me
+    Put        /user/update
+    
+    // Organizer routes
+    Post      /organizer/create
+    organizer.Use(middleware.JWTMiddleware())
+    Get       /organizer/me
+    Get       /organizer/registrations
+    Put       /organizer/update
+    
+    // Event routes
+    Get                 /event/:event_id
+    Get                 /event/events
+    event.Use(middleware.JWTMiddleware())
+    Post                /event/create
+    Get                 /event/subevents
+    Put                 /event/update/:event_id
+    Delete            /event/delete/:event_id
+    Put                 /event/book/:event_id
 
-	`
-    api.Post("/user/create", CreateUser)
-    `
-
-	`
-    api.Get("/event/:event_id", GetEvent)
-    `
-
-	`
-    api.Get("/search/event/:query", SearchEvent)
-    `
-
-	`
-    api.Post("/organizer/create", CreateOrganizer)
-    `
-
-	`
-    api.Get("/tickets/:event_id", ListTicketsByEvents)
-    `
-
-	`
-    api.Get("/user/me", GetUser)
-    `
-
-	`
-    api.Post("/event/create", CreateEvent)
-    `
-
-	`
-    api.Get("/organizer/registrations", GetRegisteredEvents)
-    `
-
-	`
-    api.Get("/organizer/me", GetOrganizer)
-    `
-
-	`
-    api.Get("/subevents", SubscribedEvents)
-    `
-
-	`
-    api.Put("/user/update", UpdateUserProfile)
-    `
-
-	`
-    api.Post("/ticket/create/:event_id", CreateTicket)
-    `
-
-	`
-    api.Put("/update/event/:event_id", UpdateEvent)
-    `
-
-	`
-    api.Post("/registration/user/:ticket_id", AttendeeRegistration)
-    `
-
-	`
-    api.Put("/registration/confirm/:registration_id", ConfirmRegistration)
-    `
-
-	`
-    api.Delete("/delete/event/:event_id", DeleteEvent)
-    `
-
-	`
-    api.Put("/event/booking/:event_id", BookEvent)
-    `
-
-	`
-    api.Put("/update/organizer/me", UpdateOrganizerProfile)
-    `
+    // Registration routes
+    registration.Use(middleware.JWTMiddleware())
+    Put    /register/confirm/:registration_id
+    Post   /register/ticket/create/:event_id
+    Post   /register/event/ticket/:ticket_id
+`
 
 - You can use tools like Postman or curl to make requests and get responses from the API. Here is an example of how to create an event using curl:
 
@@ -149,6 +104,10 @@
     }
 
   ```
+#### Certbot - for provisioning ssl certificates
+#### AWS WorkMail - for processing customer emails
+
+
 
 ##### Some Issues Encountered on the way
 - Creating a third table known as Junction Table to associate two related tables. 
