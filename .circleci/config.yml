@@ -39,11 +39,15 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/aws
+      - image: ubuntu-2204
     steps:
       - run: # Install the AWS CLI if it is not already included in the docker image
           name: Install openssh
           command: sudo apt install openssh 
+      - run: # Install the AWS CLI if it is not already included in the docker image
+          name: Install awscli
+          command: sudo apt install aws-cli 
+
       - run: 
           name: Deploy with codedeploy
           command: echo "deploying to codedeploy ..." \
