@@ -143,7 +143,10 @@ func DBConnection() (*xorm.Engine, error) {
 	// ty := Ticket{}
 	// ty.Type = GeneralAdmission
 	dsn := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s  dbname=%s sslmode=disable", "localhost", 5432, "eugene", os.Getenv("PASSWORD"), "eventsdb")
+		"host=%s port=%d user=%s password=%s  dbname=%s sslmode=disable", "dpg-cnsieimn7f5s73dba1m0-a", 5432, "eventsdb_chc2_user", os.Getenv("DB_PASSWORD"), "eventsdb_chc2")
+		
+		// dsn := fmt.Sprintf(
+		// "host=%s port=%d user=%s password=%s  dbname=%s sslmode=disable", "localhost", 5432, "eugene", os.Getenv("PASSWORD"), "eventsdb")
 	engine, err := xorm.NewEngine("postgres", dsn)
 	if err != nil{
 		return nil, err
