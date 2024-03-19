@@ -1,7 +1,7 @@
 version: 2.1
 
-orbs:
-  aws-code-deploy: circleci/aws-code-deploy@3.0.0
+# orbs:
+#   aws-code-deploy: circleci/aws-code-deploy@3.0.0
 
 jobs:
   build:
@@ -37,7 +37,7 @@ jobs:
       #     name: Run
       #     command: ./main
 
-  aws-code-deploy:
+  deploy:
     docker:
       - image: cimg/aws
     steps:
@@ -56,6 +56,6 @@ workflows:
   deploy_application:
     jobs:
       - build
-      - aws-code-deploy/deploy
+      - deploy
 
 
