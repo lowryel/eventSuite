@@ -50,39 +50,38 @@
 ### Usage
 * The eventSuite API offers the following endpoints:
 
-`   Post        api/login
-	Get     api/search/event/:query
-	Get     api/tickets/:event_id`
+`   Post        api/login`
+`	Get     api/search/event/:query`
+`	Get     api/tickets/:event_id`
 
- `   // User route
-    Post       /user/create
-    user.Use(middleware.JWTMiddleware())
-    Get        /user/me
-    Put        /user/update`
+ `   // User route`
+ `   Post       /user/create`
+ `   user.Use(middleware.JWTMiddleware())`
+ `   Get        /user/me`
+ `   Put        /user/update`
     
- `   // Organizer routes
-    Post      /organizer/create
-    organizer.Use(middleware.JWTMiddleware())
-    Get       /organizer/me
-    Get       /organizer/registrations
-    Put       /organizer/update`
+ `   // Organizer routes`
+ `   Post      /organizer/create`
+ `   organizer.Use(middleware.JWTMiddleware())`
+ `   Get       /organizer/me`
+ `   Get       /organizer/registrations`
+ `   Put       /organizer/update`
     
- `   // Event routes
-    Get                 /event/:event_id
-    Get                 /event/events
-    event.Use(middleware.JWTMiddleware())
-    Post                /event/create
-    Get                 /event/subevents
-    Put                 /event/update/:event_id
-    Delete            /event/delete/:event_id
-    Put                 /event/book/:event_id`
+ `   // Event routes`
+`    Get                 /event/:event_id`
+ `   Get                 /event/events`
+ `   event.Use(middleware.JWTMiddleware())`
+ `   Post                /event/create`
+ `   Get                 /event/subevents`
+ `   Put                 /event/update/:event_id`
+ `   Delete            /event/delete/:event_id`
+ `   Put                 /event/book/:event_id`
 
- `   // Registration routes
-    registration.Use(middleware.JWTMiddleware())
-    Put    /register/confirm/:registration_id
-    Post   /register/ticket/create/:event_id
-    Post   /register/event/ticket/:ticket_id
-`
+ `   // Registration routes`
+ `   registration.Use(middleware.JWTMiddleware())`
+ `   Put    /register/confirm/:registration_id`
+ `   Post   /register/ticket/create/:event_id`
+ `   Post   /register/event/ticket/:ticket_id`
 
 - You can use tools like Postman or curl to make requests and get responses from the API. Here is an example of how to create an event using curl:
 
