@@ -1,3 +1,6 @@
 *.env
 .vscode/*
 repo.go
+.terraform.*
+eventskeypair.pem
+.terraform

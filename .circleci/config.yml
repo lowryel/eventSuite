@@ -33,33 +33,36 @@ jobs:
             && echo 'STRIPE_SECRET_KEY='${STRIPE_SECRET_KEY} >> .env \
             && echo 'STRIPE_PUBLISHABLE_KEY='${STRIPE_PUBLISHABLE_KEY} >> .env && \
             cat .env
-      # - run:
-      #     name: Run
-      #     command: ./main
+      - run:
+          name: AWS EC2 deploy
+          command: |
+            #upload all the code to machine
+            scp -r -o StrictHostKeyChecking=no ./ ubuntu@13.236.1.107:/home/circleci-aws/
+            #Run script inside of machine
+            ssh -o StrictHostKeyChecking=no ubuntu@13.236.1.107 "./deploy.sh"
 
-  deploy:
-    docker:
-      - image: ubuntu-2204
-    steps:
-      - run: # Install the AWS CLI if it is not already included in the docker image
-          name: Install openssh
-          command: sudo apt install openssh 
-      - run: # Install the AWS CLI if it is not already included in the docker image
-          name: Install awscli
-          command: sudo apt install aws-cli 
+  # deploy:
+  #   docker:
+  #     - image: 
+  #   steps:
+  #     - run: # Install the AWS CLI if it is not already included in the docker image
+  #         name: Install openssh
+  #         command: sudo apt install openssh 
+  #     - run: # Install the AWS CLI if it is not already included in the docker image
+  #         name: Install awscli
+  #         command: sudo apt install aws-cli 
 
-      - run: 
-          name: Deploy with codedeploy
-          command: echo "deploying to codedeploy ..." \
-            echo ${ssh_key} > ssh_rsa_key.pem
-            ssh -i ssh_rsa_key.pem ubuntu@ec2-3-89-115-53.compute-1.amazonaws.com \
-            "sudo apt update && sudo apt install -y python3-pip"
+  #     - run: 
+  #         name: Deploy with codedeploy
+  #         command: echo "deploying to codedeploy ..." \
+  #           echo ${ssh_key} > ssh_rsa_key.pem
+  #           ssh -i ssh_rsa_key.pem ubuntu@ec2-3-89-115-53.compute-1.amazonaws.com \
+  #           "sudo apt update && sudo apt install -y python3-pip"
           
 
 workflows:
   deploy_application:
     jobs:
       - build
-      - deploy
 
 
