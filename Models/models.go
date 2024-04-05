@@ -4,7 +4,7 @@ import (
 	// "fmt"
 	"os"
 	"time"
-	// "fmt"
+	"fmt"
 
 
 	// "github.com/google/uuid"
@@ -141,12 +141,10 @@ type EventAttendee struct{// EventAttendee is someone who made a booking. This w
 // var engine *xorm.Engine
 
 func DBConnection() (*xorm.Engine, error) {
-	// ty := Ticket{}
-	// ty.Type = GeneralAdmission
-	dsn := os.Getenv("DB_URI")
+	// dsn := os.Getenv("DB_URI")
 		
-	// dsn := fmt.Sprintf(
-	// "host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", "localhost", 5432, "eugene", os.Getenv("PASSWORD"), "eventsdb")
+	dsn := fmt.Sprintf(
+	"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", "localhost", 5432, "eugene", os.Getenv("PASSWORD"), "eventsdb")
 	engine, err := xorm.NewEngine("postgres", dsn)
 	if err != nil{
 		return nil, err
